@@ -1,0 +1,53 @@
+---
+- name: Select images for the current host
+  ansible.builtin.set_fact:
+    host_images: >-
+      {{
+        images
+        | selectattr('group', 'defined')
+        | selectattr('group', 'in', group_names)
+        | list
+      }}
+
+- name: Check whether images already exist
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - --namespace
+      - k8s.io
+      - image
+      - inspect
+      - "{{ item.name }}:{{ item.tag }}"
+  register: image_inspect
+  changed_when: false
+  failed_when: false
+  loop: "{{ host_images }}"
+  loop_control:
+    label: "{{ item.name }}:{{ item.tag }}"
+
+- name: Load missing images
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - --namespace
+      - k8s.io
+      - load
+      - --input
+      - "{{ download_dir.images }}/{{ item.item.archive }}"
+  when: item.rc != 0
+  loop: "{{ image_inspect.results }}"
+  loop_control:
+    label: "{{ item.item.name }}:{{ item.item.tag }}"
+
+- name: Ensure digest-qualified image references exist
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - --namespace
+      - k8s.io
+      - tag
+      - "{{ item.name }}:{{ item.tag }}"
+      - "{{ item.name }}@sha256:{{ item.digest }}"
+  loop: "{{ host_images }}"
+  loop_control:
+    label: "{{ item.name }}:{{ item.tag }} -> {{ item.name }}@sha256:{{ item.digest }}"

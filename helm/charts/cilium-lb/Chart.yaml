@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cilium-lb
+description: Cilium Load Balancer configuration
+type: application
+version: 0.1.0

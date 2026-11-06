@@ -1,0 +1,15 @@
+---
+- name: Install crictl binaries
+  ansible.builtin.unarchive:
+    src: "{{ download_dir.sysd_service }}/{{ packages.crictl.artifact }}"
+    dest: /usr/local/bin
+    remote_src: true
+    owner: "{{ non_root.user }}"
+    group: "{{ non_root.group }}"
+    mode: '0755'
+
+- name: Add crictl auto-completion
+  ansible.builtin.shell:
+    cmd: crictl completion bash > /etc/bash_completion.d/crictl
+  args:
+    creates: /etc/bash_completion.d/crictl

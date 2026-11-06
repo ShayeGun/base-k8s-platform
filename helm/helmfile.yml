@@ -1,0 +1,22 @@
+---
+environments:
+  default:
+    values:
+      - environments/main.yml
+
+helmfiles:
+  - path: releases/00-networking.yml
+    inherits:
+      - environments
+  - path: releases/01-networking-config.yml
+    inherits:
+      - environments
+  - path: releases/10-volume.yml
+    inherits:
+      - environments
+  - path: releases/20-gateway-api.yml
+    inherits:
+      - environments
+  - path: releases/30-observability.yml
+    inherits:
+      - environments

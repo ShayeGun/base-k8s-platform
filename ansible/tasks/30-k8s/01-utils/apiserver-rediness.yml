@@ -1,0 +1,14 @@
+---
+- name: Wait for API server readiness
+  ansible.builtin.command:
+    argv:
+    - kubectl
+    - get
+    - --raw=/readyz
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  register: apiserver_ready
+  changed_when: false
+  retries: 30
+  delay: 10
+  until: apiserver_ready.rc == 0

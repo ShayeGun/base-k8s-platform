@@ -1,0 +1,7 @@
+etcd:
+  namespace: "apisix-etcd"
+  ambient: true
+
+apisix:
+  namespace: "apisix-ingress"
+  ambient: true

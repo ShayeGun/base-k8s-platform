@@ -1,0 +1,9 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: {{ .Values.lb.name | quote }}
+spec:
+  blocks:
+    - start: {{ .Values.lb.pool.start | quote }}
+      stop: {{ .Values.lb.pool.stop | quote }}

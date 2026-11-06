@@ -1,0 +1,30 @@
+namespace: local-path-storage
+
+replicaCount: 1
+
+image:
+  repository: docker.io/rancher/local-path-provisioner
+  tag: v0.0.37
+  pullPolicy: IfNotPresent
+
+nodeSelector: {}
+
+provisioner:
+  debug: true
+  configMountPath: /etc/config/
+
+serviceAccount:
+  name: local-path-provisioner-service-account
+
+storageClass:
+  name: local-path
+  provisioner: rancher.io/local-path
+  reclaimPolicy: Delete
+  volumeBindingMode: WaitForFirstConsumer
+
+storage:
+  defaultPath: /var
+
+helperPod:
+  image: docker.io/library/busybox:1.38.0-glibc
+  imagePullPolicy: IfNotPresent

@@ -1,0 +1,8 @@
+---
+releases:
+  - name: local-path-provisioner
+    namespace: local-path-storage
+    createNamespace: true
+    chart: ../charts/local-path-provisioner
+    values:
+      - ../values/volume/local-path-provisioner.gotmpl

@@ -1,0 +1,25 @@
+---
+- name: Remove default APT repositories
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d"
+    state: absent
+
+- name: Copy local APT gpg key
+  ansible.builtin.copy:
+    dest: "/etc/apt/keyrings/{{ gpg.file }}"
+    src: "{{ gpg.path }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add local APT repository to sources.list
+  ansible.builtin.blockinfile:
+    path: /etc/apt/sources.list
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+    marker: "# {mark} ANSIBLE MANAGED LOCAL REPOSITORY"
+    block: |
+      deb [signed-by=/etc/apt/keyrings/{{ gpg.file }}] file:{{ download_dir.apt }} noble main

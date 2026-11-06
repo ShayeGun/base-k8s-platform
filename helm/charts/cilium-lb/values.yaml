@@ -1,0 +1,8 @@
+lb:
+  name: ""
+  pool:
+    start: ""
+    stop: ""
+
+l2:
+  interface: ""

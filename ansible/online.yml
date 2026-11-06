@@ -1,0 +1,3 @@
+---
+- name: Download cluster all components and requirements
+  ansible.builtin.import_playbook: groups/online.yml

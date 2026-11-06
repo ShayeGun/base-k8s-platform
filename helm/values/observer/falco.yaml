@@ -1,0 +1,69 @@
+image:
+  tag: 0.45.2-debian
+
+# Do not deploy Falcosidekick as a Falco chart dependency.
+falcosidekick:
+  enabled: false
+
+driver:
+  enabled: true
+  kind: modern_ebpf
+  loader:
+    enabled: false
+  modernEbpf:
+    leastPrivileged: false
+    sysfsMount: true
+
+collectors:
+  containerEngine:
+    enabled: true
+    engines:
+      containerd:
+        enabled: true
+        sockets:
+          - /run/containerd/containerd.sock # Default is /run/host-containerd/containerd.sock which is invalid
+
+      cri:
+        enabled: false
+
+      docker:
+        enabled: false
+
+      podman:
+        enabled: false
+
+      libvirt_lxc:
+        enabled: false
+
+      lxc:
+        enabled: false
+
+      bpm:
+        enabled: false
+
+falcoctl:
+  artifact:
+    install:
+      enabled: false
+    follow:
+      enabled: false
+
+falco:
+  rules_files:
+    - /etc/falco/rules.d
+
+  # Send events as JSON.
+  json_output: true
+  json_include_output_property: true
+
+  # Forward events to Falcosidekick over HTTP.
+  http_output:
+    enabled: true
+    url: "http://falcosidekick.falco.svc.cluster.local:2801/"
+
+  # Avoid sending duplicate events directly to local syslog.
+  syslog_output:
+    enabled: false
+
+# Useful for immediate event output.
+tty: true

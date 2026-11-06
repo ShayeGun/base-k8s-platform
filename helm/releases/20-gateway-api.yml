@@ -1,0 +1,54 @@
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+  timeout: 180
+
+releases:
+  - name: apisix-namespace-manager
+    namespace: default
+    installed: true
+    chart: ../charts/apisix-namespace-manager
+
+  - name: etcd-operator
+    namespace: apisix-etcd
+    chart: /opt/helm/charts/etcd-operator-0.5.8.tgz
+    values:
+      - ../values/gateway/etcd-operator.yaml
+    needs:
+      - default/apisix-namespace-manager
+
+  - name: etcd-cluster
+    namespace: apisix-etcd
+    chart: ../charts/etcd-cluster
+    wait: false
+    waitForJobs: false
+    needs:
+      - apisix-etcd/etcd-operator
+
+  - name: apisix
+    namespace: apisix-ingress
+    chart: /opt/helm/charts/apisix-2.18.2.tgz
+    values:
+      - ../values/gateway/apisix.gotmpl
+    needs:
+      - apisix-etcd/etcd-cluster
+
+  - name: apisix-ingress-controller
+    namespace: apisix-ingress
+    chart: /opt/helm/charts/apisix-ingress-controller-1.4.1.tgz
+    values:
+      - ../values/gateway/apisix-controller.gotmpl
+      - apisix:
+          adminService:
+            namespace: apisix-ingress
+    needs:
+      - apisix-etcd/etcd-cluster
+
+  - name: apisix-gateway-api
+    namespace: apisix-ingress
+    chart: /opt/helm/charts/apisix-gateway-api
+    values:
+      - ../values/gateway/gateway-api.gotmpl
+    needs:
+      - apisix-ingress/apisix

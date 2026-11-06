@@ -1,0 +1,70 @@
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: etcd-cluster-deny-all
+  namespace: {{ .Release.Namespace }}
+spec: {}
+
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-etcd-operator-communication
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      etcd-operator.cozystack.io/cluster: {{ .Release.Name }}
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.operator }}
+    to:
+    - operation:
+        ports:
+          - "2380"
+          - "2379"
+
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-etcd-peer-communication
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      etcd-operator.cozystack.io/cluster: {{ .Release.Name }}
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/{{ .Release.Namespace }}/sa/default # currently cant change serviceaccount using etcd-operator
+    to:
+    - operation:
+        ports:
+          - "2380"
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-apisix-etcd
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      etcd-operator.cozystack.io/cluster: {{ .Release.Name }}
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/{{ .Values.apisix.namespace }}/sa/{{ .Values.apisix.serviceaccount }}
+      to:
+        - operation:
+            ports:
+              - "2379"

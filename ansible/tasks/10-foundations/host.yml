@@ -1,0 +1,110 @@
+---
+# ------------------------------------------------------------
+# Install APT packages
+# ------------------------------------------------------------
+
+- name: Install APT packages
+  ansible.builtin.apt:
+    name: "{{ apt_packages }}"
+    state: present
+    update_cache: true
+
+# ------------------------------------------------------------
+# Configure Chrony / NTP
+# ------------------------------------------------------------
+
+- name: Disable systemd NTP synchronization
+  ansible.builtin.command:
+    cmd: timedatectl set-ntp false
+  changed_when: false
+
+- name: Configure chrony NTP server
+  ansible.builtin.copy:
+    dest: /etc/chrony/sources.d/admin.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      server {{ ntp_server }} iburst
+  notify: Restart chrony
+
+- name: Ensure chrony is enabled and running
+  ansible.builtin.systemd_service:
+    name: chrony
+    enabled: true
+    state: started
+
+# ------------------------------------------------------------
+# Disable swap
+# ------------------------------------------------------------
+
+- name: Disable all active swap
+  ansible.builtin.command:
+    cmd: swapoff -a
+  when: ansible_facts["swaptotal_mb"] | int > 0
+  changed_when: true
+
+- name: Remove swap entries from fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^\s*(?!#).*?\s+swap\s+.*$'
+    replace: '# Disabled by Ansible: \g<0>'
+
+# ------------------------------------------------------------
+# Kernel modules
+# ------------------------------------------------------------
+
+- name: Load overlay kernel module
+  ansible.builtin.modprobe:
+    name: overlay
+    state: present
+    persistent: present
+
+- name: Load br_netfilter kernel module
+  ansible.builtin.modprobe:
+    name: br_netfilter
+    state: present
+    persistent: present
+
+# ------------------------------------------------------------
+# Kernel networking parameters
+# ------------------------------------------------------------
+
+- name: Configure Kubernetes networking sysctl parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: true
+  loop:
+    - name: net.bridge.bridge-nf-call-iptables
+      value: "1"
+    - name: net.bridge.bridge-nf-call-ip6tables
+      value: "1"
+    - name: net.ipv4.ip_forward
+      value: "1"
+
+
+- name: Create systemd unit directory
+  ansible.builtin.file:
+    path: /usr/local/lib/systemd/system
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create bash completion directory
+  ansible.builtin.file:
+    path: /etc/bash_completion.d
+    state: directory
+    owner: "{{ non_root.user }}"
+    group: "{{ non_root.group }}"
+    mode: '0755'
+
+# ------------------------------------------------------------
+# Apply handlers
+# ------------------------------------------------------------
+
+# - name: Run pending handlers
+#   ansible.builtin.meta: flush_handlers

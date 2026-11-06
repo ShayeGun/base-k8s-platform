@@ -1,0 +1,16 @@
+kind: JoinConfiguration
+apiVersion: kubeadm.k8s.io/v1beta4
+
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "{{ cluster.api_server.host }}:{{ cluster.api_server.port }}"
+    token: "{{ bootstrap_token_result.stdout | trim }}"
+    caCertHashes:
+      - "{{ hostvars['manager1']['kubeadm_ca_hash'] }}"
+
+nodeRegistration:
+  name: "{{ ansible_facts['hostname'] }}"
+  criSocket: "{{ cluster.cri_socket }}"
+  kubeletExtraArgs:
+    - name: node-ip
+      value: "{{ internal_ip }}"

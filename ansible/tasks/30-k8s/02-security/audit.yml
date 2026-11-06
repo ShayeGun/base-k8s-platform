@@ -1,0 +1,167 @@
+---
+- name: Create audit configuration directory
+  ansible.builtin.file:
+    path: "{{ cluster.api_server.audit.log_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy audit policy configuration
+  ansible.builtin.copy:
+    dest: "{{ cluster.api_server.audit.policy }}"
+    content: |
+      ---
+      apiVersion: audit.k8s.io/v1
+      kind: Policy
+
+      # Don't generate separate audit events for the RequestReceived stage.
+      omitStages:
+        - "RequestReceived"
+
+      rules:
+
+        # ============================================================
+        # 1. Cilium
+        # ============================================================
+
+        # Cilium components watch Kubernetes resources continuously.
+        # Avoid filling the audit log with their watch/list traffic.
+        - level: None
+          users:
+            - "system:serviceaccount:kube-system:cilium"
+          verbs:
+            - "watch"
+            - "list"
+          resources:
+            - group: ""
+              resources:
+                - pods
+                - nodes
+                - services
+                - endpoints
+                - endpointslices
+                - configmaps
+
+        # ============================================================
+        # 2. Istio
+        # ============================================================
+
+        # Istio components also perform continuous watches.
+        # Don't log their high-volume watch traffic.
+        - level: None
+          users:
+            - "system:serviceaccount:istio-system:istiod"
+          verbs:
+            - "watch"
+            - "list"
+          resources:
+            - group: ""
+              resources:
+                - pods
+                - services
+                - endpoints
+                - configmaps
+            - group: "apps"
+              resources:
+                - deployments
+                - replicasets
+
+        # ============================================================
+        # 3. Pods
+        # ============================================================
+
+        # Record pod creation/modification/deletion including request body.
+        - level: RequestResponse
+          resources:
+            - group: ""
+              resources:
+                - pods
+
+        # Pod logs/status don't need request/response bodies.
+        - level: Metadata
+          resources:
+            - group: ""
+              resources:
+                - pods/log
+                - pods/status
+
+        # ============================================================
+        # 4. Namespaces
+        # ============================================================
+
+        # Important for tracking PSA changes such as:
+        #
+        # pod-security.kubernetes.io/enforce=restricted
+        #
+        - level: RequestResponse
+          resources:
+            - group: ""
+              resources:
+                - namespaces
+
+        # ============================================================
+        # 5. Deployments / DaemonSets / StatefulSets
+        # ============================================================
+
+        # Track workload changes.
+        - level: RequestResponse
+          resources:
+            - group: "apps"
+              resources:
+                - deployments
+                - daemonsets
+                - statefulsets
+                - replicasets
+
+        # ============================================================
+        # 6. RBAC
+        # ============================================================
+
+        # Security-sensitive changes.
+        - level: RequestResponse
+          resources:
+            - group: "rbac.authorization.k8s.io"
+              resources:
+                - roles
+                - rolebindings
+                - clusterroles
+                - clusterrolebindings
+
+        # ============================================================
+        # 7. Secrets and ConfigMaps
+        # ============================================================
+
+        # Don't record secret contents.
+        - level: Metadata
+          resources:
+            - group: ""
+              resources:
+                - secrets
+                - configmaps
+
+        # ============================================================
+        # 8. Authentication / authorization sensitive resources
+        # ============================================================
+
+        - level: Metadata
+          resources:
+            - group: "authentication.k8s.io"
+              resources:
+                - tokenreviews
+            - group: "authorization.k8s.io"
+              resources:
+                - subjectaccessreviews
+                - selfsubjectaccessreviews
+                - selfsubjectrulesreviews
+
+        # ============================================================
+        # 9. Everything else
+        # ============================================================
+
+        # Capture who did what, but don't store request/response bodies.
+        - level: Metadata
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true

@@ -1,0 +1,38 @@
+---
+cluster:
+  api_server:
+    host: "{{ cilium.api_server.host }}"
+    port: "{{ cluster.api_server.port | int }}"
+
+  network:
+    pod_cidr: "{{ cilium.pod_cidr }}"
+    interfaces:
+        - "{{ ansible_facts['enp0s3']['device'] }}"
+        - "{{ ansible_facts['enp0s8']['device'] }}"
+    internal_interface: "{{ ansible_facts['enp0s3']['device'] }}"
+    external_interface: "{{ ansible_facts['enp0s8']['device'] }}"
+    port: "{{ cilium.tunnel_port | int }}"
+
+  load_balancer:
+    name: "{{ cilium.load_balancer.name }}"
+    pool:
+      start: "{{ cilium.load_balancer.pool.start }}"
+      stop: "{{ cilium.load_balancer.pool.stop }}"
+
+volume_provisioner:
+    label:
+        key: "{{ volume_provisioner.label.key }}"
+        value: "{{ volume_provisioner.label.value }}"
+    path: "{{ volume_provisioner.data_path }}"
+
+gateway_api:
+    admin:
+        apikey: "{{ gateway.admin.apikey }}"
+        service_ip: "{{ gateway.admin.direct_ip_access | default('', true) }}"
+    service_ip: "{{ gateway.service.ip }}"
+    domain: "{{ gateway.domain }}"
+
+observer:
+    syslog:
+        ns: "{{ syslog.namespace }}"
+        svc: "{{ syslog.service }}"

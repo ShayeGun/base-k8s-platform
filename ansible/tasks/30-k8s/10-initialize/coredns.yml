@@ -1,0 +1,83 @@
+---
+- name: Get CoreDNS config
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - configmap
+      - coredns
+      - -n
+      - kube-system
+      - -o
+      - jsonpath={.data.Corefile}
+  register: coredns_config
+  changed_when: false
+
+- name: Register CoreDNS forward check
+  ansible.builtin.set_fact:
+    coredns_has_no_forward: "{{ 'forward' not in coredns_config.stdout }}"
+
+- name: Remove DNS forward in CoreDNS config
+  when: not (coredns_has_no_forward | bool)
+  block:
+    - name: Remove DNS forwarding from CoreDNS
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - patch
+          - configmap
+          - coredns
+          - -n
+          - kube-system
+          - --type=merge
+          - -p
+          - "{{ {'data': {'Corefile': coredns_corefile} } | to_json }}"
+      vars:
+        coredns_corefile: |
+          .:53 {
+              errors
+              health {
+                  lameduck 5s
+              }
+              ready
+              kubernetes cluster.local in-addr.arpa ip6.arpa {
+                  pods insecure
+                  fallthrough in-addr.arpa ip6.arpa
+                  ttl 30
+              }
+              prometheus :9153
+              cache 30 {
+                  disable success cluster.local
+                  disable denial cluster.local
+              }
+              loop
+              reload
+              loadbalance
+          }
+      register: coredns_patch
+      changed_when: coredns_patch.rc == 0
+
+
+    - name: install helm charts
+      ansible.builtin.include_tasks:
+        file: "../01-utils/rollout.yml"
+      vars:
+          rollout_kind: deployment
+          rollout_name: coredns
+          rollout_namespace: kube-system
+
+- name: Display kube-dns Service
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - svc
+      - kube-dns
+      - -n
+      - kube-system
+  register: kube_dns_service
+  changed_when: false
+
+- name: Show kube-dns verification result
+  ansible.builtin.debug:
+    msg: "{{ kube_dns_service.stdout }}"

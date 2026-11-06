@@ -1,0 +1,56 @@
+---
+- name: Create charts directory
+  ansible.builtin.file:
+    path: "{{ download_dir.charts }}"
+    state: directory
+    owner: "{{ non_root.user }}"
+    group: "{{ non_root.group }}"
+    mode: "0755"
+
+- name: Download charts from HTTPS Helm repositories
+  ansible.builtin.command:
+    argv:
+      - helm
+      - pull
+      - "{{ item.chart }}"
+      - --repo
+      - "{{ item.url }}"
+      - --destination
+      - "{{ download_dir.charts }}"
+      - --version
+      - "{{ item.version }}"
+  loop: "{{ charts }}"
+  loop_control:
+    label: "Download {{ item.name }}"
+  when: item.url.startswith('https://')
+  args:
+    creates: "{{ download_dir.charts }}/{{ item.name }}-{{ item.version }}.tgz"
+
+- name: Download charts from OCI registries
+  ansible.builtin.command:
+    argv:
+      - helm
+      - pull
+      - "{{ item.url }}/{{ item.chart }}"
+      - --destination
+      - "{{ download_dir.charts }}"
+      - --version
+      - "{{ item.version }}"
+  loop: "{{ charts }}"
+  loop_control:
+    label: "Download {{ item.name }}"
+  when: item.url.startswith('oci://')
+  args:
+    creates: "{{ download_dir.charts }}/{{ item.name }}-{{ item.version }}.tgz"
+
+- name: Rename chart archives
+  ansible.builtin.command:
+    argv:
+      - mv
+      - "{{ download_dir.charts }}/{{ item.chart }}-{{ item.version }}.tgz"
+      - "{{ download_dir.charts }}/{{ item.name }}-{{ item.version }}.tgz"
+  args:
+    creates: "{{ download_dir.charts }}/{{ item.name }}-{{ item.version }}.tgz"
+  loop: "{{ charts }}"
+  loop_control:
+    label: "Rename {{ item.chart }} to {{ item.name }}-{{item.version}}.tgz"

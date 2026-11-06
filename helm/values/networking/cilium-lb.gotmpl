@@ -1,0 +1,8 @@
+lb:
+    name: {{ .Values.cluster.load_balancer.name | quote }}
+    pool:
+        start: {{ .Values.cluster.load_balancer.pool.start | quote }}
+        stop: {{ .Values.cluster.load_balancer.pool.stop | quote }}
+
+l2:
+    interface: {{ .Values.cluster.network.external_interface | quote }}

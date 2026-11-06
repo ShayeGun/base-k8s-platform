@@ -1,0 +1,24 @@
+---
+- name: Get node name
+  ansible.builtin.command:
+    argv:
+      - hostname
+      - -s
+  register: node_name_result
+  changed_when: false
+
+- name: Apply Kubernetes node label
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - label
+      - node
+      - "{{ node_name_result.stdout | trim }}"
+      - "{{ node_label.key }}={{ node_label.value }}"
+      - --overwrite
+  delegate_to: manager1
+  become: true
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  register: node_label_result
+  changed_when: "'not labeled' not in node_label_result.stdout"

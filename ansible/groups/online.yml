@@ -1,0 +1,43 @@
+---
+- name: Prepare Kubernetes requirements
+  hosts: online
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/main.yml
+    - ../defaults/main.yml
+
+  handlers:
+    - name: Include host handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Download required apt packages
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/apt.yml
+    - name: configure host
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/host.yml
+
+    - name: Download required services
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/services.yml
+    - name: Download required images
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/images.yml
+
+    - name: Install CRI components
+      ansible.builtin.include_tasks:
+        file: ../tasks/20-cri/main.yml
+
+    - name: Install helm
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/00-install/helm.yml
+    - name: Download required helm charts
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/charts.yml
+
+    - name: Archive resources
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/archive.yml

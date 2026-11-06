@@ -1,0 +1,26 @@
+---
+- name: Configure Kubernetes controll-plane nodes
+  hosts: managers
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/main.yml
+    - ../defaults/main.yml
+
+  tasks:
+    - name: Load images
+      ansible.builtin.include_tasks:
+        file: ../tasks//20-cri/images.yml
+    - name: Install helm
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/00-install/helm.yml
+    - name: Install cilium-cli
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/00-install/cilium.yml
+    - name: Install k9s
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/00-install/k9s.yml
+    - name: Initialize cluster
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/controll-plane.yml

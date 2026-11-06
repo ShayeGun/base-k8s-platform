@@ -1,0 +1,43 @@
+kind: InitConfiguration
+apiVersion: kubeadm.k8s.io/v1beta4
+
+skipPhases:
+  - addon/kube-proxy
+
+localAPIEndpoint:
+  advertiseAddress: "{{ cluster.api_server.host }}"
+  bindPort: {{ cluster.api_server.port }}
+
+nodeRegistration:
+  criSocket: "{{ cluster.cri_socket }}"
+  imagePullPolicy: Never
+  kubeletExtraArgs:
+    - name: node-ip
+      value: "{{ cluster.api_server.host }}"
+
+---
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta4
+
+imageRepository: registry.k8s.io
+
+{% if cluster.certificate_sans is defined %}
+apiServer:
+  certSANs:
+{% for san in cluster.certificate_sans %}
+    - "{{ san }}"
+{% endfor %}
+{% endif %}
+
+clusterName: "{{ cluster.name }}"
+kubernetesVersion: "v{{ packages.kubeadm.version }}"
+
+networking:
+  serviceSubnet: "{{ cluster.networking.service_cidr }}"
+  podSubnet: "{{ cluster.networking.pod_cidr }}"
+
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+
+cgroupDriver: systemd

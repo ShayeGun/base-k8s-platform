@@ -1,0 +1,38 @@
+---
+- name: Install kubeadm
+  ansible.builtin.copy:
+    src: "{{ download_dir.sysd_service }}/{{ packages.kubeadm.artifact }}"
+    dest: /usr/local/bin/kubeadm
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create kubelet systemd drop-in directory
+  ansible.builtin.file:
+    path: /usr/lib/systemd/system/kubelet.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Change kubeadm service "ExecStart" field
+  ansible.builtin.replace:
+    path: "{{ download_dir.sysd_config }}/{{ services.kubeadm.artifact }}"
+    regexp: '/usr/bin/kubelet'
+    replace: '/usr/local/bin/kubelet'
+
+- name: Install kubeadm kubelet systemd drop-in
+  ansible.builtin.copy:
+    src: "{{ download_dir.sysd_config }}/{{ services.kubeadm.artifact }}"
+    dest: "{{ services.kubeadm.path }}/{{ services.kubeadm.artifact }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install kubeadm bash completion
+  ansible.builtin.shell:
+    cmd: kubeadm completion bash > /etc/bash_completion.d/kubeadm
+  args:
+    creates: /etc/bash_completion.d/kubeadm

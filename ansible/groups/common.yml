@@ -1,0 +1,30 @@
+---
+- name: Configure Kubernetes nodes
+  hosts: cluster
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/main.yml
+    - ../defaults/main.yml
+
+  handlers:
+    - name: Include host handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Unarchive files
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/unarchive.yml
+    - name: Configure local APT repository
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/apt.yml
+    - name: Configure host
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/host.yml
+    - name: Install CRI components
+      ansible.builtin.include_tasks:
+        file: ../tasks/20-cri/main.yml
+    - name: Install K8S components
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/00-install/main.yml

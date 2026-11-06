@@ -1,0 +1,5 @@
+nodeSelector:
+  {{ .Values.volume_provisioner.label.key | quote }}: {{ .Values.volume_provisioner.label.value | quote }}
+
+storage:
+  defaultPath: {{ .Values.volume_provisioner.path | quote }}

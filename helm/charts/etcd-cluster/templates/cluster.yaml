@@ -1,0 +1,12 @@
+---
+apiVersion: etcd-operator.cozystack.io/v1alpha2
+kind: EtcdCluster
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  version: "3.7.2"
+  storage:
+    size: 2Gi
+    storageClassName: local-path

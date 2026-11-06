@@ -1,0 +1,4 @@
+apiVersion: v2
+name: apisix-namespace-manager
+description: Manages required namespaces for service mesh in apisix ecosystem
+version: 0.0.1

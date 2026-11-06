@@ -1,0 +1,12 @@
+---
+- name: Configure common components on all nodes
+  ansible.builtin.import_playbook: groups/common.yml
+
+- name: Configure Kubernetes manager nodes
+  ansible.builtin.import_playbook: groups/manager.yml
+
+- name: Configure Kubernetes worker nodes
+  ansible.builtin.import_playbook: groups/worker.yml
+
+- name: Run entire cluster
+  ansible.builtin.import_playbook: groups/run.yml

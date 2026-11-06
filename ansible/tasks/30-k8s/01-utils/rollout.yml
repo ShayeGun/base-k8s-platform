@@ -1,0 +1,27 @@
+---
+- name: Restart {{ rollout_kind }}/{{ rollout_name }}
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - rollout
+      - restart
+      - "{{ rollout_kind }}/{{ rollout_name }}"
+      - -n
+      - "{{ rollout_namespace }}"
+  changed_when: true
+
+- name: Wait for {{ rollout_kind }}/{{ rollout_name }} rollout
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - rollout
+      - status
+      - "{{ rollout_kind }}/{{ rollout_name }}"
+      - -n
+      - "{{ rollout_namespace }}"
+      - "--timeout={{ rollout_timeout | default('120s') }}"
+  register: rollout_result
+  changed_when: false
+  retries: "{{ rollout_retries | default(3) }}"
+  delay: "{{ rollout_delay | default(5) }}"
+  until: rollout_result.rc == 0

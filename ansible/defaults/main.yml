@@ -1,0 +1,153 @@
+---
+# ---------------------------------------------------------------------------
+# General host defaults
+# ---------------------------------------------------------------------------
+
+ntp_server: "ntp.day.ir"
+
+non_root:
+  user: "ubuntu"
+  group: "ubuntu"
+
+helm_dir: "/opt/helm"
+
+# ---------------------------------------------------------------------------
+# Download and staging directories
+# ---------------------------------------------------------------------------
+
+download_dir:
+  common: "/home/{{ non_root.user }}/Downloads"
+  apt: "{{ download_dir.common }}/apt"
+  sysd_service: "{{ download_dir.common }}/services"
+  sysd_config: "{{ download_dir.common }}/configs"
+  images: "{{ download_dir.common }}/images"
+  charts: "{{ download_dir.common }}/charts"
+  gpg: "{{ download_dir.common }}/gpg"
+
+config_dir:
+  desktop: "/home/{{ non_root.user }}/Desktop"
+  common: "/opt"
+  helm: "{{ config_dir.common }}/helm"
+
+export_dir: "/tmp/export_{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
+import_dir: "/home/ubuntu/Downloads"
+
+# ---------------------------------------------------------------------------
+# Local repository signing key
+# ---------------------------------------------------------------------------
+
+gpg:
+  name: "local-repo"
+  dir: "{{ download_dir.gpg }}"
+  file: "{{ gpg.name }}.asc"
+  path: "{{ gpg.dir }}/{{ gpg.file }}"
+
+# ---------------------------------------------------------------------------
+# Container runtime defaults
+# ---------------------------------------------------------------------------
+
+containerd:
+  root: "/var/lib/containerd"
+  state: "/run/containerd"
+  sandbox_image: "registry.k8s.io/pause:3.10.2"
+  default_runtime: "runc"
+
+  runtimes:
+    runc:
+      type: "io.containerd.runc.v2"
+      options:
+        SystemdCgroup: true
+
+    runsc:
+      type: "io.containerd.runsc.v1"
+
+# ---------------------------------------------------------------------------
+# Kubernetes cluster configuration
+# ---------------------------------------------------------------------------
+
+cluster:
+  name: "shycluster"
+  bootstrap_token_ttl: "10m"
+
+  api_server:
+    # Stable endpoint used by cluster clients and Cilium.
+    # Use a VIP or load-balancer address if the control plane has one.
+    host: "{{ hostvars['manager1']['internal_ip'] }}"
+    port: 6446
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    audit:
+      policy: /etc/kubernetes/audit-policy.yaml
+      log_dir: /var/log/kubernetes/audit
+      log_file: "{{ cluster.api_server.audit.log_dir }}/audit.log"
+      log_maxage: 5
+      log_maxbackup: 3
+      log_maxsize: 50
+    encryption:
+      dir: /etc/kubernetes/encryption
+      file: "{{ cluster.api_server.encryption.dir }}/enc.yaml"
+      base64_key: "HPbnMocJp651eD9nFdk2chLf83kS1L/9K0b+XJ5IHAk="
+
+  networking:
+    pod_cidr: "10.244.0.0/16"
+    service_cidr: "10.245.0.0/16"
+
+  cri_socket: "unix:///var/run/containerd/containerd.sock"
+
+  certificate_sans:
+    - "{{ hostvars['manager1']['ansible_host'] }}"
+
+# ---------------------------------------------------------------------------
+# Cilium configuration
+# ---------------------------------------------------------------------------
+
+cilium:
+  tunnel_port: 8473
+
+  # Reuse the cluster pod CIDR rather than maintaining a duplicate value.
+  pod_cidr: "{{ cluster.networking.pod_cidr }}"
+
+  # Cilium must connect to a stable Kubernetes API endpoint.
+  api_server:
+    host: "{{ cluster.api_server.host }}"
+    port: "{{ cluster.api_server.port | int }}"
+
+  interface:
+    - "{{ ansible_facts['enp0s3']['device'] }}"
+    - "{{ ansible_facts['enp0s8']['device'] }}"
+
+  load_balancer:
+    name: "homelab"
+    pool:
+      start: "192.168.59.245"
+      stop: "192.168.59.255"
+
+# ---------------------------------------------------------------------------
+# Local path provisioner configuration
+# ---------------------------------------------------------------------------
+
+volume_provisioner:
+  data_path: "/data"
+  label:
+    key: "node-type"
+    value: "storage"
+
+
+# ---------------------------------------------------------------------------
+# APISIX gateway configuration
+# ---------------------------------------------------------------------------
+
+gateway:
+  admin:
+    apikey: edd1c9f034335f136f87ad84b625c8f1
+    direct_ip_access: 192.168.59.251
+  service:
+    ip: 192.168.59.252
+  domain: "kube.local"
+
+# ---------------------------------------------------------------------------
+# Observability configuration
+# ---------------------------------------------------------------------------
+
+syslog:
+  namespace: axosyslog
+  service: axosyslog-aggregator

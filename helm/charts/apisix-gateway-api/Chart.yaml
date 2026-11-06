@@ -1,0 +1,6 @@
+apiVersion: v2
+name: apisix-gateway-api
+description: Custom Gateway API resources for APISIX
+type: application
+version: 0.1.0
+appVersion: "1.0"

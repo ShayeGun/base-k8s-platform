@@ -1,0 +1,105 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-snapshot-scheduler
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: etcd-snapshot-scheduler
+          restartPolicy: Never
+          containers:
+            - name: snapshot
+              image: docker.io/alpine/kubectl:1.37.1
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  NS="{{ .Release.Namespace }}"
+                  CLUSTER="{{ .Release.Name }}"
+                  PREFIX="${CLUSTER}-"
+                  NAME="${PREFIX}$(date -u +%Y%m%d%H%M%S)"
+
+                  cat <<EOF | kubectl apply -f -
+                  apiVersion: etcd-operator.cozystack.io/v1alpha2
+                  kind: EtcdSnapshot
+                  metadata:
+                    name: ${NAME}
+                    namespace: ${NS}
+                  spec:
+                    clusterRef:
+                      name: ${CLUSTER}
+                    destination:
+                      pvc:
+                        claimName: etcd-backups
+                  EOF
+
+                  phase=""
+                  i=0
+                  while [ "$i" -lt 180 ]; do
+                    phase="$(kubectl get etcdsnapshot "${NAME}" \
+                      -n "${NS}" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+
+                    [ "$phase" = "Complete" ] && break
+
+                    if [ "$phase" = "Failed" ]; then
+                      kubectl describe etcdsnapshot "${NAME}" -n "${NS}"
+                      exit 1
+                    fi
+
+                    i=$((i + 1))
+                    sleep 10
+                  done
+
+                  if [ "$phase" != "Complete" ]; then
+                    echo "Snapshot ${NAME} did not complete before timeout"
+                    kubectl describe etcdsnapshot "${NAME}" -n "${NS}" || true
+                    exit 1
+                  fi
+
+                  # Preserve the previous backup unless the new snapshot
+                  # has completed successfully.
+                  latest="$(ls -1t /backup/${PREFIX}*.db 2>/dev/null | head -n 1 || true)"
+                  if [ -z "$latest" ]; then
+                    echo "Snapshot reported Complete, but no backup file was found"
+                    exit 1
+                  fi
+
+                  for f in /backup/${PREFIX}*.db; do
+                    [ -f "$f" ] || continue
+                    if [ "$f" != "$latest" ]; then
+                      rm -f "$f" "$f.uid"
+                    fi
+                  done
+
+                  # Retain the latest 12 CR records for troubleshooting.
+                  kubectl get etcdsnapshots.etcd-operator.cozystack.io \
+                    -n "${NS}" \
+                    -o custom-columns=NAME:.metadata.name --no-headers \
+                    | grep "^${PREFIX}" \
+                    | sort -r \
+                    | tail -n +13 \
+                    | while read -r old; do
+                        [ -n "$old" ] && kubectl delete \
+                          etcdsnapshot.etcd-operator.cozystack.io "$old" \
+                          -n "${NS}" --ignore-not-found
+                      done
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backup
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: etcd-backups

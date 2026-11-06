@@ -1,0 +1,14 @@
+---
+- name: Run cluster
+  hosts: managers
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/main.yml
+    - ../defaults/main.yml
+
+  tasks:
+    - name: install helm charts
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/20-run/helmfile.yml

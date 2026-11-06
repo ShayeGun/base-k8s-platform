@@ -1,0 +1,32 @@
+# Based on:
+# https://github.com/kubernetes-sigs/kubespray/blob/master/roles/container-engine/containerd/templates/config.toml.j2
+
+{% if packages.containerd.version is version('2.3.0', '>=') %}
+version = 4
+{% else %}
+version = 3
+{% endif %}
+
+root = "{{ containerd.root }}"
+state = "{{ containerd.state }}"
+
+[plugins."io.containerd.cri.v1.images".pinned_images]
+  sandbox = "{{ containerd.sandbox_image }}"
+
+[plugins."io.containerd.cri.v1.runtime".containerd]
+  default_runtime_name = "{{ containerd.default_runtime }}"
+
+{% for name, runtime in containerd.runtimes.items() %}
+{% if runtime.enabled | default(true) %}
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.{{ name }}]
+  runtime_type = "{{ runtime.type }}"
+
+{% if runtime.options is defined %}
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.{{ name }}.options]
+{% for key, value in runtime.options.items() %}
+  {{ key }} = {% if value is boolean %}{{ value | lower }}{% elif value is number %}{{ value }}{% else %}"{{ value }}"{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+{% endfor %}

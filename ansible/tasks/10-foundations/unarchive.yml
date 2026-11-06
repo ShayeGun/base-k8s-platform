@@ -1,0 +1,26 @@
+---
+- name: Find archives
+  ansible.builtin.find:
+    paths: "{{ import_dir }}"
+    patterns: "*.tgz"
+    file_type: file
+  register: archives
+
+- name: Unarchive each archive in its current directory
+  ansible.builtin.unarchive:
+    src: "{{ item.path }}"
+    dest: "{{ download_dir.common }}"
+    remote_src: true
+    owner: "{{ non_root.user }}"
+    group: "{{ non_root.group }}"
+  loop: "{{ archives.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Delete archive files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ archives.files }}"
+  loop_control:
+    label: "Deleted {{ item.path }}"

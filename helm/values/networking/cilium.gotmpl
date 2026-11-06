@@ -1,0 +1,53 @@
+---
+cni:
+  customConf: false
+  uninstall: false
+  exclusive: false
+
+envoy:
+  enabled: false
+
+operator:
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    # Skips first initilization deadlock ( cilium <=> kubernetes )
+    - key: node.kubernetes.io/not-ready
+      operator: Exists
+      effect: NoSchedule
+
+tunnelPort:  {{ .Values.cluster.network.port }}
+
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - {{ .Values.cluster.network.pod_cidr | quote }}
+
+kubeProxyReplacement: true
+
+k8sServiceHost: {{ .Values.cluster.api_server.host | quote }}
+k8sServicePort: {{ .Values.cluster.api_server.port }}
+
+l2announcements:
+  enabled: true
+
+k8sClientRateLimit:
+  qps: 10
+  burst: 20
+
+devices:
+    {{- toYaml .Values.cluster.network.interfaces | nindent 2 }}
+
+nodePort:
+  directRoutingDevice: {{ .Values.cluster.network.internal_interface | quote }}
+
+socketLB:
+  hostNamespaceOnly: true
+
+bpf:
+  masquerade: false

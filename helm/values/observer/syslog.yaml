@@ -1,0 +1,12 @@
+image:
+  repository: ghcr.io/axoflow/axosyslog
+  tag: 4.28.0
+
+collector:
+  enabled: false
+
+aggregator:
+  logFileStorage:
+    enabled: true
+    storageClass: local-path
+    size: 2Gi

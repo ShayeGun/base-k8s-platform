@@ -1,0 +1,33 @@
+image:
+  repository: ghcr.io/fluent/fluent-bit
+  tag: 5.1.5
+
+luaScripts:
+  enrich.lua: |
+    function enrich(tag, timestamp, record)
+        local k = record["kubernetes"] or {}
+
+        record["syslog_hostname"] = k["host"] or "unknown"
+        record["syslog_appname"] = k["container_name"] or "unknown"
+        record["syslog_pod"] = k["pod_name"] or "unknown"
+        record["syslog_namespace"] = k["namespace_name"] or "unknown"
+
+        return 2, timestamp, record
+    end
+
+config:
+  pipeline:
+    filters:
+      - name: lua
+        match: "*"
+        script: /fluent-bit/scripts/enrich.lua
+        call: enrich
+
+    outputs:
+      - name: syslog
+        match: "*"
+        host: "{{ .Values.observer.syslog.svc }}.{{ .Values.observer.syslog.ns }}.svc.cluster.local"
+        port: 514
+        mode: tcp
+        syslog_format: rfc5424
+        syslog_message_key: log

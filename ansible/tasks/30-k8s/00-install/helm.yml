@@ -1,0 +1,74 @@
+---
+- name: Install Helm binary
+  ansible.builtin.unarchive:
+    src: "{{ download_dir.sysd_service }}/{{ packages.helm.artifact }}"
+    dest: /usr/local/bin
+    extra_opts: "--strip-components=1"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Create Helm plugin directory
+  ansible.builtin.file:
+    path: /opt/helm/plugins
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Check installed helm-diff version
+  ansible.builtin.command:
+    cmd: helm plugin list
+  register: helm_plugins
+  changed_when: false
+
+- name: Create Helm diff plugin directory
+  ansible.builtin.file:
+    path: /opt/helm/plugins/helm-diff
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Extract helm-diff plugin
+  ansible.builtin.unarchive:
+    src: "{{ download_dir.sysd_service }}/{{ packages.helm_diff.artifact }}"
+    dest: /opt/helm/plugins/helm-diff
+    extra_opts: "--strip-components=1"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  when: "'diff' not in helm_plugins.stdout or packages.helm_diff.version not in helm_plugins.stdout"
+
+- name: Install helm-diff plugin
+  ansible.builtin.command:
+    cmd: helm plugin install /opt/helm/plugins/helm-diff
+  when: "'diff' not in helm_plugins.stdout or packages.helm_diff.version not in helm_plugins.stdout"
+
+- name: Install Helmfile binary
+  ansible.builtin.unarchive:
+    src: "{{ download_dir.sysd_service }}/{{ packages.helmfile.artifact }}"
+    dest: /usr/local/bin
+    include:
+      - helmfile
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    creates: /usr/local/bin/helmfile
+
+- name: Add helm auto-completion
+  ansible.builtin.shell:
+    cmd: helm completion bash > /etc/bash_completion.d/helm
+  args:
+    creates: /etc/bash_completion.d/helm
+
+- name: Add helmfile auto-completion
+  ansible.builtin.shell:
+    cmd: helmfile completion bash > /etc/bash_completion.d/helmfile
+  args:
+    creates: /etc/bash_completion.d/helmfile

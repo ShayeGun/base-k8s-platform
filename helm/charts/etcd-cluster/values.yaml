@@ -1,0 +1,4 @@
+operator: "etcd-operator"
+apisix:
+  namespace: "apisix-ingress"
+  serviceaccount: "apisix"

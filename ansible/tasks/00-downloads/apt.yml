@@ -1,0 +1,207 @@
+---
+#####################################################
+# Links:
+# - https://medium.com/@edinson.padron.urdaneta/how-to-set-up-your-very-own-local-apt-repository-in-ubuntu-dfb509e5b2df
+# - https://askubuntu.com/questions/170348/how-to-create-a-local-apt-repository
+# - https://stackoverflow.com/questions/22008193/how-to-list-download-the-recursive-dependencies-of-a-debian-package
+#####################################################
+- name: Check whether the local APT repository is initialized
+  ansible.builtin.stat:
+    path: "{{ download_dir.apt }}/.repo_initialized"
+  register: apt_repo_initialized
+
+- name: Initialize local APT repository (one-time setup)
+  when: not apt_repo_initialized.stat.exists
+  block:
+    - name: Install APT repository tools
+      ansible.builtin.apt:
+        name:
+          - dpkg-dev
+          - gnupg
+          - gzip
+        state: present
+        update_cache: true
+
+    - name: Create APT package cache directory
+      ansible.builtin.file:
+        path: "{{ download_dir.apt }}"
+        state: directory
+        mode: "0755"
+
+    - name: Create local APT repository directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ download_dir.apt }}/dists/noble"
+        - "{{ download_dir.apt }}/dists/noble/main"
+        - "{{ download_dir.apt }}/dists/noble/main/binary-amd64"
+
+    - name: Collect APT packages and dependencies
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          for package in {{ apt_packages | map('quote') | join(' ') }}; do
+            apt-cache depends \
+              --recurse \
+              --no-recommends \
+              --no-suggests \
+              --no-conflicts \
+              --no-breaks \
+              --no-replaces \
+              --no-enhances \
+              "$package"
+          done | grep "^\w" | sort -u
+        executable: /bin/bash
+      register: apt_dependency_list
+      changed_when: false
+
+    - name: Download APT packages and dependencies
+      ansible.builtin.command:
+        argv: >-
+          {{ ['apt-get', 'download'] +
+             (apt_dependency_list.stdout_lines | unique | list) }}
+        chdir: "{{ download_dir.apt }}"
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      changed_when: false
+
+    - name: Create private GPG key directory
+      ansible.builtin.file:
+        path: "{{ gpg.dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700" # MUST
+
+    - name: Check whether repository signing key exists
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --batch
+          - --homedir
+          - "{{ gpg.dir }}"
+          - --list-keys
+          - "{{ gpg.uid }}"
+      register: gpg_key_check
+      changed_when: false
+      failed_when: false
+
+    # MANUAL UNDO:
+    # gpgconf --homedir "{{ gpg.dir }}" --kill gpg-agent
+    - name: Generate repository signing key
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --batch
+          - --homedir
+          - "{{ gpg.dir }}"
+          - --pinentry-mode
+          - loopback
+          - --passphrase
+          - ""
+          - --quick-generate-key
+          - "{{ gpg.uid }}"
+          - rsa4096
+          - sign
+          - "0"
+      when: gpg_key_check.rc != 0
+
+    - name: Export public repository signing key
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+          gpg --batch \
+            --homedir "{{ gpg.dir }}" \
+            --armor \
+            --export "{{ gpg.uid }}" \
+            > "{{ gpg.path }}"
+          chmod 0644 "{{ gpg.path }}"
+        executable: /bin/bash
+        creates: "{{ gpg.path }}"
+      changed_when: false
+
+    - name: Generate APT Packages indexes
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+
+          packages="dists/noble/main/binary-amd64/Packages"
+          packages_gz="${packages}.gz"
+
+          dpkg-scanpackages . /dev/null > "$packages"
+          gzip -n -9 -c "$packages" > "$packages_gz"
+        executable: /bin/bash
+        chdir: "{{ download_dir.apt }}"
+      changed_when: false
+
+    - name: Generate APT Release metadata
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+
+          release_file="Release"
+          packages="main/binary-amd64/Packages"
+          packages_gz="${packages}.gz"
+
+          {
+            cat <<'EOF'
+          Origin: Local_Offline_Repo
+          Label: Local_Offline_Repo
+          Suite: noble
+          Codename: noble
+          Architectures: amd64
+          Components: main
+          Description: Local offline APT repository
+          EOF
+
+            printf 'Date: %s\n' "$(LC_ALL=C date --utc -R)"
+
+            printf 'MD5Sum:\n'
+            for file in "$packages" "$packages_gz"; do
+              printf ' %s %16s %s\n' \
+                "$(md5sum "$file" | awk '{print $1}')" \
+                "$(wc -c < "$file")" \
+                "$file"
+            done
+
+            printf 'SHA256:\n'
+            for file in "$packages" "$packages_gz"; do
+              printf ' %s %16s %s\n' \
+                "$(sha256sum "$file" | awk '{print $1}')" \
+                "$(wc -c < "$file")" \
+                "$file"
+            done
+          } > "$release_file"
+        executable: /bin/bash
+        chdir: "{{ download_dir.apt }}/dists/noble"
+      changed_when: false
+
+    - name: Sign APT Release metadata
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --batch
+          - --yes
+          - --homedir
+          - "{{ gpg.dir }}"
+          - --clearsign
+          - --digest-algo
+          - SHA512
+          - --local-user
+          - "{{ gpg.uid }}"
+          - --output
+          - "{{ download_dir.apt }}/dists/noble/InRelease"
+          - "{{ download_dir.apt }}/dists/noble/Release"
+      changed_when: false
+
+    - name: Mark local APT repository as initialized
+      ansible.builtin.copy:
+        content: "Initialized: {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }} UTC\n"
+        dest: "{{ download_dir.apt }}/.repo_initialized"
+        owner: root
+        group: root
+        mode: "0644"

@@ -1,0 +1,58 @@
+---
+- name: Create OCI image directory
+  ansible.builtin.file:
+    path: "{{ download_dir.images }}"
+    state: directory
+    mode: "0755"
+
+- name: Check whether images exist locally by digest
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - image
+      - inspect
+      - "{{ item.name }}:{{ item.tag }}"
+  register: image_inspect
+  changed_when: false
+  failed_when: false
+  loop: "{{ images }}"
+  loop_control:
+    label: "{{ item.name }}:{{ item.tag }}@sha256:{{ item.digest }}"
+
+- name: Pull missing images by digest
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - pull
+      - "{{ item.item.name }}@sha256:{{ item.item.digest }}"
+  when: item.rc != 0
+  changed_when: true
+  loop: "{{ image_inspect.results }}"
+  loop_control:
+    label: "{{ item.item.name }}@sha256:{{ item.item.digest }}"
+
+- name: Tag images
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - tag
+      - "{{ item.name }}@sha256:{{ item.digest }}"
+      - "{{ item.name }}:{{ item.tag }}"
+  changed_when: true
+  loop: "{{ images }}"
+  loop_control:
+    label: "{{ item.name }}:{{ item.tag }}"
+
+- name: Export images to archives
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - save
+      - --output
+      - "{{ download_dir.images }}/{{ item.archive }}"
+      - "{{ item.name }}:{{ item.tag }}"
+  loop: "{{ images }}"
+  loop_control:
+    label: "Export {{ item.name }}:{{ item.tag }} into {{ item.archive }}"
+  args:
+    creates: "{{ download_dir.images }}/{{ item.archive }}"

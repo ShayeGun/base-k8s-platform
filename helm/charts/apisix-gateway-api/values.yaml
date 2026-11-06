@@ -1,0 +1,29 @@
+gateway:
+  className: apisix
+  controllerName: apisix.apache.org/apisix-ingress-controller
+
+  namespace: apisix-ingress
+  name: apisix
+
+  listener:
+    name: http
+    protocol: HTTP
+    port: 9080
+
+  proxy:
+    group: apisix.apache.org
+    kind: GatewayProxy
+    name: apisix-ingress-controller-config
+
+route:
+  namespace: apisix-ingress
+  name: apisix-dashboard
+  hostname: apisix.kubernetes.local
+
+  backend:
+    name: apisix-admin
+    port: 9180
+
+etcd:
+  namespace: apisix-etcd
+  name: etcd-cluster

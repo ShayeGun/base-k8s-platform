@@ -1,0 +1,17 @@
+---
+- name: Create CNI bin directory
+  ansible.builtin.file:
+    path: /opt/cni/bin
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Extract CNI plugins
+  ansible.builtin.unarchive:
+    src: "{{ download_dir.sysd_service }}/{{ packages.cni.artifact }}"
+    dest: /opt/cni/bin
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: true

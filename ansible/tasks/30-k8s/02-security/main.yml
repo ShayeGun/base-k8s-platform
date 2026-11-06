@@ -1,0 +1,8 @@
+---
+- name: Prepare required manifests for auditing
+  ansible.builtin.include_tasks:
+    file: "audit.yml"
+
+- name: Prepare required manifests for encryption at REST
+  ansible.builtin.include_tasks:
+    file: "enc.yml"

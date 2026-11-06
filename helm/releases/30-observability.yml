@@ -1,0 +1,39 @@
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+  timeout: 180
+
+releases:
+  - name: axosyslog
+    namespace: axosyslog
+    chart: /opt/helm/charts/axosyslog-0.22.0.tgz
+    values:
+      - ../values/observer/syslog.yaml
+
+  - name: fluentbit
+    namespace: fluent
+    chart: /opt/helm/charts/fluentbit-1.1.3.tgz
+    values:
+      - ../values/observer/fluentbit.gotmpl
+    needs:
+      - axosyslog/axosyslog
+
+  - name: falcosidekick
+    namespace: falco
+    chart: /opt/helm/charts/falcosidekick-0.14.2.tgz
+    values:
+      - ../values/observer/sidekick.gotmpl
+    needs:
+      - axosyslog/axosyslog
+
+  - name: falco
+    namespace: falco
+    chart: /opt/helm/charts/falco-9.2.2.tgz
+    values:
+      - ../values/observer/falco.yaml
+    set:
+      - name: customRules.falco_rules\.yaml
+        file: ../values/observer/falco-rules.yaml
+    needs:
+      - falco/falcosidekick
