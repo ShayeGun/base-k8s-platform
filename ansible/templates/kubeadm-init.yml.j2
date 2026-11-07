@@ -21,6 +21,8 @@ apiVersion: kubeadm.k8s.io/v1beta4
 
 imageRepository: registry.k8s.io
 
+controlPlaneEndpoint: "{{ cluster.api_server.vip }}:{{ cluster.api_server.port }}"
+
 {% if cluster.certificate_sans is defined %}
 apiServer:
   certSANs:

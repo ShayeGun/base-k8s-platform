@@ -1,4 +1,8 @@
 ---
+- name: Install kube-vip
+  ansible.builtin.include_tasks:
+    file: ../00-install/kube-vip.yml
+
 - name: Check if Kubernetes API server manifest exists
   ansible.builtin.stat:
     path: /etc/kubernetes/manifests/kube-apiserver.yaml

@@ -28,6 +28,7 @@ config_dir:
   desktop: "/home/{{ non_root.user }}/Desktop"
   common: "/opt"
   helm: "{{ config_dir.common }}/helm"
+  manifests: "/etc/kubernetes/manifests"
 
 export_dir: "/tmp/export_{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
 import_dir: "/home/ubuntu/Downloads"
@@ -73,7 +74,9 @@ cluster:
     # Stable endpoint used by cluster clients and Cilium.
     # Use a VIP or load-balancer address if the control plane has one.
     host: "{{ hostvars['manager1']['internal_ip'] }}"
-    port: 6446
+    vip: "192.168.59.140"
+    interface: "{{ ansible_facts['enp0s8']['device'] }}"
+    port: 6443
     path: /etc/kubernetes/manifests/kube-apiserver.yaml
     audit:
       policy: /etc/kubernetes/audit-policy.yaml
@@ -95,6 +98,8 @@ cluster:
 
   certificate_sans:
     - "{{ hostvars['manager1']['ansible_host'] }}"
+    - "{{ hostvars['manager1']['internal_ip'] }}"
+    - "{{ cluster.api_server.vip }}"
 
 # ---------------------------------------------------------------------------
 # Cilium configuration
@@ -108,12 +113,12 @@ cilium:
 
   # Cilium must connect to a stable Kubernetes API endpoint.
   api_server:
-    host: "{{ cluster.api_server.host }}"
+    host: "{{ cluster.api_server.vip }}"
     port: "{{ cluster.api_server.port | int }}"
 
   interface:
-    - "{{ ansible_facts['enp0s3']['device'] }}"
-    - "{{ ansible_facts['enp0s8']['device'] }}"
+    external: "{{ ansible_facts['enp0s8']['device'] }}"
+    internal: "{{ ansible_facts['enp0s3']['device'] }}"
 
   load_balancer:
     name: "homelab"

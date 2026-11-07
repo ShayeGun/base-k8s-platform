@@ -3,7 +3,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 
 discovery:
   bootstrapToken:
-    apiServerEndpoint: "{{ cluster.api_server.host }}:{{ cluster.api_server.port }}"
+    apiServerEndpoint: "{{ cluster.api_server.vip }}:{{ cluster.api_server.port }}"
     token: "{{ bootstrap_token_result.stdout | trim }}"
     caCertHashes:
       - "{{ hostvars['manager1']['kubeadm_ca_hash'] }}"

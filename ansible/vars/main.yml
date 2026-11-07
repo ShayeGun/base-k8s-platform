@@ -132,7 +132,7 @@ images:
     tag: v1.14.6
     archive: coredns_v1.14.6.tar
     digest: 1ba6f47265602e2e50a9c4669e3a955e4298a0d30dc82f39293d4bf1a851e0ff
-    group: managers
+    group: cluster
 
   - name: registry.k8s.io/pause
     tag: 3.10.2
@@ -144,6 +144,12 @@ images:
     tag: 3.7.0-0
     archive: etcd_3.7.0-0.tar
     digest: 1f445fa5dd06b08f3c0cf9f46e2891e9bc66cbf7e0b9c66627c40658edf4bc98
+    group: managers
+
+  - name: ghcr.io/kube-vip/kube-vip
+    tag: v1.3.1
+    archive: kube-vip_v1.3.1.tar
+    digest: 1962f9daf226503f7e6b107f595cb28b7917fd2d0113957075e19a3e5a6c1e33
     group: managers
 
   #######################

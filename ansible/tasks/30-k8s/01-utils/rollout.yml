@@ -22,6 +22,6 @@
       - "--timeout={{ rollout_timeout | default('120s') }}"
   register: rollout_result
   changed_when: false
-  retries: "{{ rollout_retries | default(3) }}"
-  delay: "{{ rollout_delay | default(5) }}"
+  retries: "{{ rollout_retries | default(5) }}"
+  delay: "{{ rollout_delay | default(10) }}"
   until: rollout_result.rc == 0

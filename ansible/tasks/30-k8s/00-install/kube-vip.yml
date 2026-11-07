@@ -1,0 +1,44 @@
+---
+- name: Create Kubernetes static Pod manifests directory
+  ansible.builtin.file:
+    path: "{{ config_dir.manifests }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Generate kube-vip static Pod manifest
+  ansible.builtin.command:
+    argv:
+      - nerdctl
+      - -n
+      - k8s.io
+      - run
+      - --rm
+      - --net=host
+      - "ghcr.io/kube-vip/kube-vip:v1.3.1"
+      - manifest
+      - pod
+      - --interface
+      - "{{ cluster.api_server.interface }}"
+      - --address
+      - "{{ cluster.api_server.vip }}"
+      - --controlplane
+      - --arp
+      - --leaderElection
+  register: kube_vip_manifest
+  changed_when: false
+
+- name: Set imagePullPolicy to IfNotPresent
+  ansible.builtin.set_fact:
+    kube_vip_manifest_content: >-
+      {{ kube_vip_manifest.stdout
+          | regex_replace('imagePullPolicy:\s*Always', 'imagePullPolicy: IfNotPresent') }}
+
+- name: Install kube-vip static Pod manifest
+  ansible.builtin.copy:
+    content: "{{ kube_vip_manifest_content }}\n"
+    dest: "{{ config_dir.manifests }}/kube-vip.yaml"
+    owner: root
+    group: root
+    mode: "0600"

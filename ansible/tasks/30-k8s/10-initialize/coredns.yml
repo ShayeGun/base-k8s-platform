@@ -57,15 +57,6 @@
       register: coredns_patch
       changed_when: coredns_patch.rc == 0
 
-
-    - name: install helm charts
-      ansible.builtin.include_tasks:
-        file: "../01-utils/rollout.yml"
-      vars:
-          rollout_kind: deployment
-          rollout_name: coredns
-          rollout_namespace: kube-system
-
 - name: Display kube-dns Service
   ansible.builtin.command:
     argv:

@@ -2,15 +2,15 @@
 cluster:
   api_server:
     host: "{{ cilium.api_server.host }}"
-    port: "{{ cluster.api_server.port | int }}"
+    port: "{{ cilium.api_server.port | int }}"
 
   network:
     pod_cidr: "{{ cilium.pod_cidr }}"
     interfaces:
-        - "{{ ansible_facts['enp0s3']['device'] }}"
-        - "{{ ansible_facts['enp0s8']['device'] }}"
-    internal_interface: "{{ ansible_facts['enp0s3']['device'] }}"
-    external_interface: "{{ ansible_facts['enp0s8']['device'] }}"
+        - "{{ cilium.interface.internal }}"
+        - "{{ cilium.interface.external }}"
+    internal_interface: "{{ cilium.interface.internal }}"
+    external_interface: "{{ cilium.interface.external }}"
     port: "{{ cilium.tunnel_port | int }}"
 
   load_balancer:

@@ -74,23 +74,22 @@
       changed_when: join_result.rc == 0
       no_log: true
 
-    - name: Wait for the worker to become Ready
+    - name: Wait for the worker to register with the Kubernetes API
       ansible.builtin.command:
         argv:
           - kubectl
-          - wait
-          - "--for=condition=Ready"
+          - get
           - "node/{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}"
-          - --timeout=120s
+          - --no-headers
       delegate_to: manager1
       become: true
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
-      register: node_ready_result
+      register: node_registered_result
       changed_when: false
-      retries: 3
+      retries: 5
       delay: 10
-      until: node_ready_result.rc == 0
+      until: node_registered_result.rc == 0
 
   always:
 
