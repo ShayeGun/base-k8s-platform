@@ -25,7 +25,7 @@
             - secretbox:
                 keys:
                   - name: k1
-                    secret: "{{ cluster.api_server.encryption.base64_key }}"
+                    secret: "{{ api_server_secret }}"
             - identity: {}
         - resources:
             - '*.*'

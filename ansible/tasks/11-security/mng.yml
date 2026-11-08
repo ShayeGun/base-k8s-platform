@@ -1,0 +1,7 @@
+---
+- name: Install sops & age binaries
+  ansible.builtin.include_tasks:
+    file: install.yml
+- name: Decrypt secrets
+  ansible.builtin.include_tasks:
+    file: dec.yml

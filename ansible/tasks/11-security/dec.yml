@@ -1,0 +1,42 @@
+---
+- name: Check encrypted secrets file
+  ansible.builtin.stat:
+    path: "{{ security.secrets.file }}"
+  register: encrypted_secrets_stat
+
+- name: Ensure encrypted secrets file exists
+  ansible.builtin.assert:
+    that:
+      - encrypted_secrets_stat.stat.exists
+      - encrypted_secrets_stat.stat.isreg
+    fail_msg: "Encrypted secrets file is missing: {{ security.secrets.file }}"
+
+- name: Decrypt secrets with SOPS
+  ansible.builtin.command:
+    argv:
+      - sops
+      - --config
+      - "{{ security.sops }}"
+      - --decrypt
+      - --input-type
+      - yaml
+      - --output-type
+      - yaml
+      - "{{ security.secrets.file }}"
+  register: decrypted_secrets
+  environment:
+    SOPS_AGE_KEY_FILE: "{{ security.age.pv_key }}"
+  changed_when: false
+  no_log: true
+
+- name: Set decrypted secrets as facts
+  ansible.builtin.set_fact:
+    api_server_secret: "{{ (decrypted_secrets.stdout | from_yaml).api_server }}"
+    apisix_admin_secret: "{{ (decrypted_secrets.stdout | from_yaml).apisix }}"
+    cacheable: false
+  no_log: true
+
+- name: Clear temporary decrypted secrets
+  ansible.builtin.set_fact:
+    decrypted_secrets: null
+  no_log: true

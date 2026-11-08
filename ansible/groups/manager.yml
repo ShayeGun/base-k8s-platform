@@ -21,6 +21,9 @@
     - name: Install k9s
       ansible.builtin.include_tasks:
         file: ../tasks/30-k8s/00-install/k9s.yml
+    - name: Decrypt cluster secrets
+      ansible.builtin.include_tasks:
+        file: ../tasks/11-security/mng.yml
     - name: Initialize cluster
       ansible.builtin.include_tasks:
         file: ../tasks/30-k8s/10-initialize/controll-plane.yml

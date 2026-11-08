@@ -27,7 +27,7 @@ volume_provisioner:
 
 gateway_api:
     admin:
-        apikey: "{{ gateway.admin.apikey }}"
+        apikey: "{{ apisix_admin_secret }}"
         service_ip: "{{ gateway.admin.direct_ip_access | default('', true) }}"
     service_ip: "{{ gateway.service.ip }}"
     domain: "{{ gateway.domain }}"

@@ -5,6 +5,7 @@ apt_packages:
   - tar
   - tree
   - vim
+  - openssl
   - bash-completion
 
 packages:
@@ -91,6 +92,18 @@ packages:
     url: "https://github.com/derailed/k9s/releases/download/v{{ packages.k9s.version }}/k9s_linux_amd64.deb"
     checksum: "sha256:56b539a509eb2d6357cf4f575ed38c089f0e4880c95f79a70196b54f14954908"
     artifact: "k9s-v{{ packages.k9s.version }}.deb"
+
+  age:
+    version: "1.3.2"
+    url: "https://github.com/FiloSottile/age/releases/download/v{{ packages.age.version }}/age-v{{ packages.age.version }}-linux-amd64.tar.gz"
+    checksum: "sha256:cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10"
+    artifact: "age-v{{ packages.age.version }}-linux-amd64.tar.gz"
+
+  sops:
+    version: "3.13.3"
+    url: "https://github.com/getsops/sops/releases/download/v{{ packages.sops.version }}/sops-v{{ packages.sops.version }}.linux.amd64"
+    checksum: "sha256:e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b"
+    artifact: "sops-v{{ packages.sops.version }}.deb"
 
 services:
   containerd:

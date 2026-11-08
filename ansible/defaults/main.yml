@@ -34,6 +34,24 @@ export_dir: "/tmp/export_{{ ansible_facts['date_time']['iso8601_basic_short'] }}
 import_dir: "/home/ubuntu/Downloads"
 
 # ---------------------------------------------------------------------------
+# Secrets
+# ---------------------------------------------------------------------------
+
+security:
+  configs: "{{ import_dir }}/sec/generated"
+
+  age:
+    pv_key: "{{ security.configs }}/age.key"
+    pub_key: "{{ security.configs }}/age.pub"
+
+  sops: "{{ security.configs }}/.sops.yaml"
+
+  secrets:
+    path: "{{ import_dir }}/sec/secrets"
+    file: "{{ security.secrets.path }}/secrets.enc.yml"
+
+
+# ---------------------------------------------------------------------------
 # Local repository signing key
 # ---------------------------------------------------------------------------
 
@@ -88,7 +106,6 @@ cluster:
     encryption:
       dir: /etc/kubernetes/encryption
       file: "{{ cluster.api_server.encryption.dir }}/enc.yaml"
-      base64_key: "HPbnMocJp651eD9nFdk2chLf83kS1L/9K0b+XJ5IHAk="
 
   networking:
     pod_cidr: "10.244.0.0/16"
@@ -143,7 +160,6 @@ volume_provisioner:
 
 gateway:
   admin:
-    apikey: edd1c9f034335f136f87ad84b625c8f1
     direct_ip_access: 192.168.59.251
   service:
     ip: 192.168.59.252

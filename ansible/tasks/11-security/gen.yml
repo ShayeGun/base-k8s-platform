@@ -1,0 +1,55 @@
+- name: Create sops & age config directory
+  ansible.builtin.file:
+    path: "{{ security.configs }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Generate age private identity
+  ansible.builtin.command:
+    argv:
+      - age-keygen
+      - -o
+      - "{{ security.age.pv_key }}"
+  args:
+    creates: "{{ security.age.pv_key }}"
+  no_log: true
+
+- name: Set private key permissions
+  ansible.builtin.file:
+    path: "{{ security.age.pv_key }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Extract age public recipient
+  ansible.builtin.command:
+    argv:
+      - age-keygen
+      - -y
+      - "{{ security.age.pv_key }}"
+  register: age_recipient
+  changed_when: false
+  no_log: true
+
+- name: Save age public recipient
+  ansible.builtin.copy:
+    content: "{{ age_recipient.stdout }}\n"
+    dest: "{{ security.age.pub_key }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create .sops.yaml
+  ansible.builtin.copy:
+    dest: "{{ security.sops }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      creation_rules:
+        - path_regex: '.*\.enc\.(yaml|yml)$'
+          age: {{ age_recipient.stdout }}

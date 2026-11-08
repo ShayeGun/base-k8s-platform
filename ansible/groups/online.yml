@@ -23,13 +23,17 @@
     - name: Download required services
       ansible.builtin.include_tasks:
         file: ../tasks/00-downloads/services.yml
-    - name: Download required images
+
+    - name: Generate cluster secrets
       ansible.builtin.include_tasks:
-        file: ../tasks/00-downloads/images.yml
+        file: ../tasks/11-security/main.yml
 
     - name: Install CRI components
       ansible.builtin.include_tasks:
         file: ../tasks/20-cri/main.yml
+    - name: Download required images
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/images.yml
 
     - name: Install helm
       ansible.builtin.include_tasks:

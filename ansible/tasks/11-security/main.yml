@@ -1,0 +1,10 @@
+---
+- name: Install sops & age binaries
+  ansible.builtin.include_tasks:
+    file: install.yml
+- name: Bootstrap sops & age
+  ansible.builtin.include_tasks:
+    file: gen.yml
+- name: Generate secret file
+  ansible.builtin.include_tasks:
+    file: enc.yml
