@@ -86,12 +86,12 @@ containerd:
 
 cluster:
   name: "shycluster"
-  bootstrap_token_ttl: "10m"
+  bootstrap_token_ttl: "60m"
 
   api_server:
     # Stable endpoint used by cluster clients and Cilium.
     # Use a VIP or load-balancer address if the control plane has one.
-    host: "{{ hostvars['manager1']['internal_ip'] }}"
+    host: "{{ hostvars[groups['initial_manager'][0]]['internal_ip'] }}"
     vip: "192.168.59.140"
     interface: "{{ ansible_facts['enp0s8']['device'] }}"
     port: 6443
@@ -113,10 +113,14 @@ cluster:
 
   cri_socket: "unix:///var/run/containerd/containerd.sock"
 
-  certificate_sans:
-    - "{{ hostvars['manager1']['ansible_host'] }}"
-    - "{{ hostvars['manager1']['internal_ip'] }}"
-    - "{{ cluster.api_server.vip }}"
+  certificate_sans: >-
+    {{
+      groups['managers']
+      | map('extract', hostvars)
+      | map(attribute='internal_ip')
+      | list
+      + [cluster.api_server.vip]
+    }}
 
 # ---------------------------------------------------------------------------
 # Cilium configuration

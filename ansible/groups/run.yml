@@ -1,6 +1,6 @@
 ---
 - name: Run cluster
-  hosts: managers
+  hosts: initial_manager
   become: true
   gather_facts: true
 

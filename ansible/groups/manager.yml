@@ -1,5 +1,5 @@
 ---
-- name: Configure Kubernetes controll-plane nodes
+- name: Configure base Kubernetes controll-plane nodes requirements
   hosts: managers
   become: true
   gather_facts: true
@@ -24,6 +24,40 @@
     - name: Decrypt cluster secrets
       ansible.builtin.include_tasks:
         file: ../tasks/11-security/mng.yml
+    - name: Extra api-server security configs
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/common.yml
+
+########
+- name: Bootstrap Kubernetes cluster
+  hosts: initial_manager
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/main.yml
+    - ../defaults/main.yml
+
+  tasks:
     - name: Initialize cluster
       ansible.builtin.include_tasks:
-        file: ../tasks/30-k8s/10-initialize/controll-plane.yml
+        file: ../tasks/30-k8s/10-initialize/init.yml
+    - name: Remove forwarding DNS to host
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/coredns.yml
+
+########
+- name: Join manager nodes to cluster
+  hosts: joining_managers
+  become: true
+  gather_facts: true
+  serial: 1 # Because of etcd joining
+
+  vars_files:
+    - ../vars/main.yml
+    - ../defaults/main.yml
+
+  tasks:
+    - name: Join cluster as manager
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/join-mng.yml

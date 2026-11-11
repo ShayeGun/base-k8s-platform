@@ -13,10 +13,22 @@
 # Configure Chrony / NTP
 # ------------------------------------------------------------
 
-- name: Disable systemd NTP synchronization
-  ansible.builtin.command:
-    cmd: timedatectl set-ntp false
-  changed_when: false
+- name: Disable time synchronization services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop:
+    - systemd-timesyncd
+    - chronyd
+    - chrony
+    - ntpd
+    - ntp
+    - openntpd
+    - ntpsec
+    - phc2sys
+    - ptp4l
+  failed_when: false
 
 - name: Configure chrony NTP server
   ansible.builtin.copy:

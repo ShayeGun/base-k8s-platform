@@ -7,7 +7,6 @@
 - name: Join Kubernetes cluster using a temporary bootstrap token
   when: not kubelet_conf.stat.exists
   block:
-
     - name: Calculate Kubernetes CA public-key hash
       ansible.builtin.shell: |
         set -o pipefail
@@ -17,19 +16,19 @@
           awk '{print $1}'
       args:
         executable: /bin/bash
-      delegate_to: manager1
+      delegate_to: "{{ groups['initial_manager'][0] }}"
       register: kubeadm_ca_hash_result
       changed_when: false
       run_once: true
-      no_log: true
+      # no_log: true
 
     - name: Set Kubernetes CA hash fact on the manager host
       ansible.builtin.set_fact:
         kubeadm_ca_hash: "sha256:{{ kubeadm_ca_hash_result.stdout | trim }}"
-      delegate_to: manager1
+      delegate_to: "{{ groups['initial_manager'][0] }}"
       delegate_facts: true
       run_once: true
-      no_log: true
+      # no_log: true
 
     - name: Generate a short-lived bootstrap token
       ansible.builtin.command:
@@ -39,11 +38,11 @@
           - create
           - --ttl
           - "{{ cluster.bootstrap_token_ttl }}"
-      delegate_to: manager1
+      delegate_to: "{{ groups['initial_manager'][0] }}"
       become: true
       register: bootstrap_token_result
       changed_when: true
-      no_log: true
+      # no_log: true
 
     - name: Create kubeadm config directory
       ansible.builtin.file:
@@ -60,7 +59,7 @@
         owner: root
         group: root
         mode: "0600"
-      no_log: true
+      # no_log: true
 
     - name: Join the worker to Kubernetes
       ansible.builtin.command:
@@ -72,7 +71,7 @@
       become: true
       register: join_result
       changed_when: join_result.rc == 0
-      no_log: true
+      # no_log: true
 
     - name: Wait for the worker to register with the Kubernetes API
       ansible.builtin.command:
@@ -81,7 +80,7 @@
           - get
           - "node/{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}"
           - --no-headers
-      delegate_to: manager1
+      delegate_to: "{{ groups['initial_manager'][0] }}"
       become: true
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
@@ -92,7 +91,6 @@
       until: node_registered_result.rc == 0
 
   always:
-
     - name: Remove temporary kubeadm join configuration
       ansible.builtin.file:
         path: /opt/kubeadm/kubeadm-join.yml
@@ -105,7 +103,7 @@
           - token
           - delete
           - "{{ bootstrap_token_result.stdout | trim | split('.') | first }}"
-      delegate_to: manager1
+      delegate_to: "{{ groups['initial_manager'][0] }}"
       become: true
       when:
         - bootstrap_token_result is defined
@@ -113,7 +111,7 @@
         - bootstrap_token_result.stdout | trim | length > 0
       changed_when: true
       failed_when: false
-      no_log: true
+      # no_log: true
 
 - name: Label node as worker
   ansible.builtin.include_tasks: ../01-utils/label-node.yml

@@ -15,10 +15,22 @@ all:
         cluster:
           children:
             managers:
-              hosts:
-                manager1:
-                  ansible_host: 192.168.59.41
-                  internal_ip: 192.168.60.1
+              children:
+                initial_manager:
+                  hosts:
+                    manager0:
+                      ansible_host: 192.168.59.41
+                      internal_ip: 192.168.60.1
+
+                joining_managers:
+                  hosts:
+                    manager1:
+                      ansible_host: 192.168.59.44
+                      internal_ip: 192.168.60.4
+
+                    manager2:
+                      ansible_host: 192.168.59.45
+                      internal_ip: 192.168.60.5
 
             workers:
               hosts:

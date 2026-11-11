@@ -1,56 +1,42 @@
 ---
-- name: Install kube-vip
-  ansible.builtin.include_tasks:
-    file: ../00-install/kube-vip.yml
-
 - name: Check if Kubernetes API server manifest exists
   ansible.builtin.stat:
     path: /etc/kubernetes/manifests/kube-apiserver.yaml
   register: kube_apiserver_manifest
 
-- name: Create kubeadm config directory
-  ansible.builtin.file:
-    path: /opt/kubeadm/
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-
-- name: Configure kubeadm
-  ansible.builtin.template:
-    src: "{{ playbook_dir }}/../templates/kubeadm-init.yml.j2"
-    dest: /opt/kubeadm/kubeadm-config.yml
-    owner: root
-    group: root
-    mode: '0644'
-
 - name: Initialize Kubernetes cluster
-  ansible.builtin.command:
-    argv:
-    - kubeadm
-    - init
-    - --config
-    - /opt/kubeadm/kubeadm-config.yml
   when: not kube_apiserver_manifest.stat.exists
+  block:
+    - name: Create kubeadm config directory
+      ansible.builtin.file:
+        path: /opt/kubeadm/
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
 
-- name: Create .kube directory
-  ansible.builtin.file:
-    path: "{{ ansible_facts['env']['HOME'] }}/.kube"
-    state: directory
-    owner: "{{ non_root.user }}"
-    group: "{{ non_root.group }}"
-    mode: "0755"
+    - name: Configure kubeadm
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/kubeadm-init.yml.j2"
+        dest: /opt/kubeadm/kubeadm-config.yml
+        owner: root
+        group: root
+        mode: '0644'
 
-- name: Copy Kubernetes admin configuration
-  become: true
-  ansible.builtin.copy:
-    src: /etc/kubernetes/admin.conf
-    dest: "{{ ansible_facts['env']['HOME'] }}/.kube/config"
-    remote_src: true
-    owner: "{{ non_root.user }}"
-    group: "{{ non_root.group }}"
-    mode: "0644"
+    - name: Initialize Kubernetes cluster
+      ansible.builtin.command:
+        argv:
+        - kubeadm
+        - init
+        - --config
+        - /opt/kubeadm/kubeadm-config.yml
 
-- name: Wait for Kubernetes API server to become ready
-  ansible.builtin.include_tasks:
-    file: "../01-utils/apiserver-rediness.yml"
+    - name: Create kubeconfig in host user home directory
+      ansible.builtin.include_tasks:
+        file: ../01-utils/kubeconfig.yml
+
+  always:
+    - name: Remove temporary kubeadm init configuration
+      ansible.builtin.file:
+        path: /opt/kubeadm/kubeadm-config.yml
+        state: absent

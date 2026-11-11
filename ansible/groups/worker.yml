@@ -3,6 +3,7 @@
   hosts: workers
   become: true
   gather_facts: true
+  serial: 1
 
   vars_files:
     - ../vars/main.yml

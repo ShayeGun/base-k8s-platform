@@ -23,13 +23,40 @@ imageRepository: registry.k8s.io
 
 controlPlaneEndpoint: "{{ cluster.api_server.vip }}:{{ cluster.api_server.port }}"
 
-{% if cluster.certificate_sans is defined %}
 apiServer:
   certSANs:
 {% for san in cluster.certificate_sans %}
     - "{{ san }}"
 {% endfor %}
-{% endif %}
+  extraArgs:
+    - name: encryption-provider-config
+      value: "{{ cluster.api_server.encryption.file }}"
+    - name: audit-policy-file
+      value: "{{ cluster.api_server.audit.policy }}"
+    - name: audit-log-path
+      value: "{{ cluster.api_server.audit.log_file }}"
+    - name: audit-log-maxage
+      value: "{{ cluster.api_server.audit.log_maxage | int }}"
+    - name: audit-log-maxbackup
+      value: "{{ cluster.api_server.audit.log_maxbackup | int }}"
+    - name: audit-log-maxsize
+      value: "{{ cluster.api_server.audit.log_maxsize | int }}"
+  extraVolumes:
+    - name: encryption
+      hostPath: "{{ cluster.api_server.encryption.dir }}"
+      mountPath: "{{ cluster.api_server.encryption.dir }}"
+      readOnly: true
+      pathType: DirectoryOrCreate
+    - name: audit-policy
+      hostPath: "{{ cluster.api_server.audit.policy }}"
+      mountPath: "{{ cluster.api_server.audit.policy }}"
+      readOnly: true
+      pathType: File
+    - name: audit-log
+      hostPath: "{{ cluster.api_server.audit.log_dir }}"
+      mountPath: "{{ cluster.api_server.audit.log_dir }}"
+      readOnly: false
+      pathType: DirectoryOrCreate
 
 clusterName: "{{ cluster.name }}"
 kubernetesVersion: "v{{ packages.kubeadm.version }}"

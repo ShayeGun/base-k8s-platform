@@ -16,7 +16,7 @@
       - "{{ node_name_result.stdout | trim }}"
       - "{{ node_label.key }}={{ node_label.value }}"
       - --overwrite
-  delegate_to: manager1
+  delegate_to: "{{ groups['initial_manager'][0] }}"
   become: true
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf

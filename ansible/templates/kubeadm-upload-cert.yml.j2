@@ -1,0 +1,10 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+certificateKey: "{{ kubeadm_certificate_key }}"
+localAPIEndpoint:
+  advertiseAddress: "{{ hostvars[groups['initial_manager'][0]]['internal_ip'] }}"
+  bindPort: {{ cluster.api_server.port }}
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: "v{{ packages.kubeadm.version }}"

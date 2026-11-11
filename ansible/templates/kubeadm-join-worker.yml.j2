@@ -6,7 +6,7 @@ discovery:
     apiServerEndpoint: "{{ cluster.api_server.vip }}:{{ cluster.api_server.port }}"
     token: "{{ bootstrap_token_result.stdout | trim }}"
     caCertHashes:
-      - "{{ hostvars['manager1']['kubeadm_ca_hash'] }}"
+      - "{{ hostvars[groups['initial_manager'][0]]['kubeadm_ca_hash'] }}"
 
 nodeRegistration:
   name: "{{ ansible_facts['hostname'] }}"
