@@ -56,6 +56,10 @@ The project automates:
 
 The customer remains responsible for supplying the compute, network, IP allocations, and storage capacity. The project does not provision VMs, configure hypervisors, allocate customer networks, or manage the physical infrastructure lifecycle. It also does not deploy or operate application-specific workloads.
 
+## Overview
+
+![Overview](./assets/Base%20Kubernetes%20Platform%20Architecture.png)
+
 ## Architecture
 
 The platform has three main layers:
