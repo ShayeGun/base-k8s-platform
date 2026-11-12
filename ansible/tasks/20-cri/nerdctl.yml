@@ -1,14 +1,14 @@
 ---
-- name: Install nerdctl binaries
+- name: Install nerdctl binary
   ansible.builtin.unarchive:
-    src: "{{ download_dir.sysd_service }}/{{ packages.nerdctl.artifact }}"
+    src: "{{ download_dir.binaries }}/{{ packages.nerdctl.artifact }}"
     dest: /usr/local/bin
     remote_src: true
     owner: "{{ non_root.user }}"
     group: "{{ non_root.group }}"
-    mode: '0755'
+    mode: "0755"
 
-- name: Add nerdctl auto-completion
+- name: Add nerdctl bash completion
   ansible.builtin.shell:
     cmd: nerdctl completion bash > /etc/bash_completion.d/nerdctl
   args:

@@ -295,7 +295,7 @@ Interface names and IP addresses are environment-specific. Do not copy the examp
 
 ## Configuration
 
-Environment-specific settings are maintained in Ansible inventory and project defaults, primarily under `ansible/defaults/` and `ansible/vars/`. Update them for each customer environment rather than treating lab values as universal defaults.
+Environment-specific settings are maintained in the Ansible inventory and `ansible/group_vars/all/main.yml`, while pinned artifact versions, checksums, and digests are defined in `ansible/vars/artifacts.yml`. Update the inventory and group variables for each customer environment rather than treating lab values as universal defaults.
 
 At a minimum, review:
 
@@ -352,9 +352,9 @@ all:
 
 This is a structural example, not a complete inventory. Add or remove manager and worker hosts according to the target topology. Keep credentials out of the tracked inventory; use SSH keys, Ansible Vault, or an approved credential-injection method.
 
-### Important defaults
+### Important group variables
 
-The following values are examples of the settings that must be reviewed in `ansible/defaults/main.yml`:
+The following values are examples of the settings that must be reviewed in `ansible/group_vars/all/main.yml`:
 
 ```yaml
 cluster:
@@ -515,20 +515,22 @@ The following is an abbreviated view of the current repository structure:
 │   ├── cluster.yml
 │   ├── online.yml
 │   ├── inventory.yml
-│   ├── defaults/
-│   ├── groups/
+│   ├── group_vars/
+│   │   └── all/
 │   ├── handlers/
+│   ├── playbooks/
 │   ├── tasks/
 │   │   ├── 00-downloads/
 │   │   ├── 10-foundations/
-│   │   ├── 11-security/
+│   │   ├── 11-secrets/
 │   │   ├── 20-cri/
-│   │   └── 30-k8s/
-│   │       ├── 00-install/
-│   │       ├── 01-utils/
-│   │       ├── 02-security/
-│   │       ├── 10-initialize/
-│   │       └── 20-run/
+│   │   ├── 30-k8s/
+│   │   │   ├── 00-install/
+│   │   │   ├── 01-cli/
+│   │   │   ├── 02-security/
+│   │   │   ├── 03-utils/
+│   │   │   └── 10-initialize/
+│   │   └── 40-platform/
 │   ├── templates/
 │   └── vars/
 ├── helm/
@@ -545,24 +547,27 @@ Contains the online artifact-preparation workflow and offline host/Kubernetes de
 
 - `online.yml` prepares dependencies on a connected host.
 - `cluster.yml` is the offline cluster deployment entry point.
-- `tasks/00-downloads/` retrieves packages, services, images, charts, supporting files, and creates the export bundle.
+- `playbooks/` defines stage playbooks (`online.yml`, `common.yml`, `manager.yml`, `worker.yml`, and `platform.yml`).
+- `tasks/00-downloads/` retrieves APT packages, binaries, systemd unit files, images, charts, and creates the export bundle.
 - `tasks/10-foundations/` prepares the host and local package installation.
-- `tasks/11-security/` handles the SOPS/age secret preparation and runtime security-input workflow.
+- `tasks/11-secrets/` handles the SOPS/age secret preparation and runtime secret-decryption workflow.
 - `tasks/20-cri/` installs and configures container runtime components and imports container images.
-- `tasks/30-k8s/` installs Kubernetes components, configures kube-vip, initializes the first control plane, joins additional managers and workers, applies Kubernetes security configuration, and invokes platform deployment tasks.
-- `defaults/` and `vars/` contain configurable project and environment values.
-- `templates/` contains generated configuration templates, including kubeadm configuration.
+- `tasks/30-k8s/` installs Kubernetes node binaries and operator CLI tooling, configures kube-vip, initializes the first control plane, joins additional managers and workers, and applies Kubernetes API security configuration.
+- `tasks/40-platform/` stages Helm artifacts and invokes Helmfile for platform release reconciliation.
+- `group_vars/all/` contains customizable environment settings automatically loaded for all inventory hosts.
+- `vars/artifacts.yml` contains the pinned artifact catalog (versions, URLs, SHA-256 checksums, container image digests, and Helm chart references).
+- `templates/` contains generated configuration templates, including kubeadm and Helmfile environment configurations.
 
 ### `helm/`
 
 Contains Helmfile release definitions, custom charts, and component values.
 
 - `helmfile.yml` is the release orchestration entry point.
-- `releases/` defines the platform release groups and their dependencies.
+- `releases/` defines the platform release groups and their dependencies (`00-networking.yml`, `01-networking-config.yml`, `10-storage.yml`, `20-gateway.yml`, and `30-observability.yml`).
 - `charts/` contains project-specific charts, including Cilium LoadBalancer configuration, APISIX Gateway API resources, the APISIX etcd cluster, and Local Path Provisioner resources.
-- `values/` contains component configuration and environment-specific templates.
+- `values/` contains component configuration and environment-specific templates organized by stage (`networking/`, `storage/`, `gateway/`, and `observability/`).
 
-The release groups are organized into networking, networking configuration, volume, gateway API, and observability stages. Helmfile owns chart dependency and release ordering; Ansible invokes the platform deployment rather than duplicating that dependency graph.
+The release groups are organized into networking, networking configuration, storage, gateway, and observability stages. Helmfile owns chart dependency and release ordering; Ansible invokes the platform deployment rather than duplicating that dependency graph.
 
 ## Validation
 

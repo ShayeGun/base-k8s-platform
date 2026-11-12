@@ -1,0 +1,12 @@
+---
+- name: Install SOPS and age binaries
+  ansible.builtin.include_tasks:
+    file: install.yml
+
+- name: Generate age identity and SOPS configuration
+  ansible.builtin.include_tasks:
+    file: generate.yml
+
+- name: Generate and encrypt secrets file
+  ansible.builtin.include_tasks:
+    file: encrypt.yml

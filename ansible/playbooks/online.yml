@@ -1,0 +1,49 @@
+---
+- name: Prepare offline platform requirements
+  hosts: online
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  handlers:
+    - name: Include host handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Download required APT packages and build local repository
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/apt.yml
+
+    - name: Configure preparation host foundations
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/host.yml
+
+    - name: Download required binaries and systemd unit files
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/binaries.yml
+
+    - name: Generate and encrypt cluster secrets
+      ansible.builtin.include_tasks:
+        file: ../tasks/11-secrets/main.yml
+
+    - name: Install container runtime components
+      ansible.builtin.include_tasks:
+        file: ../tasks/20-cri/main.yml
+
+    - name: Pull, verify, and archive required container images
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/images.yml
+
+    - name: Install Helm tooling
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/01-cli/helm.yml
+
+    - name: Download required Helm charts
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/charts.yml
+
+    - name: Archive prepared resources into export bundle
+      ansible.builtin.include_tasks:
+        file: ../tasks/00-downloads/archive.yml

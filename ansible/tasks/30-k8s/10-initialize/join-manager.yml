@@ -1,0 +1,158 @@
+---
+- name: Check if Kubernetes control plane is already configured
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+
+- name: Prepare join data on the initial manager
+  run_once: true
+  delegate_to: "{{ groups['initial_manager'][0] }}"
+  become: true
+  block:
+    - name: Calculate Kubernetes CA public-key hash
+      ansible.builtin.shell: |
+        set -o pipefail
+        openssl x509 -in /etc/kubernetes/pki/ca.crt -pubkey -noout |
+          openssl pkey -pubin -outform DER |
+          sha256sum |
+          awk '{print $1}'
+      args:
+        executable: /bin/bash
+      register: kubeadm_ca_hash_result
+      changed_when: false
+
+    - name: Set Kubernetes CA hash fact on initial manager
+      ansible.builtin.set_fact:
+        kubeadm_ca_hash: "sha256:{{ kubeadm_ca_hash_result.stdout | trim }}"
+      delegate_facts: true
+
+    - name: Generate control-plane certificate key
+      ansible.builtin.command:
+        argv:
+          - kubeadm
+          - certs
+          - certificate-key
+      register: kubeadm_certificate_key_result
+      changed_when: false
+      no_log: true
+
+    - name: Set certificate key fact
+      ansible.builtin.set_fact:
+        kubeadm_certificate_key: "{{ kubeadm_certificate_key_result.stdout | trim }}"
+      no_log: true
+
+    - name: Configure upload certs for joining nodes
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/kubeadm-upload-cert.yml.j2"
+        dest: /opt/kubeadm/kubeadm-upload-cert.yml
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Upload Kubernetes control-plane certificates
+      ansible.builtin.command:
+        argv:
+          - kubeadm
+          - init
+          - phase
+          - upload-certs
+          - --upload-certs
+          - --config
+          - /opt/kubeadm/kubeadm-upload-cert.yml
+      changed_when: true
+      no_log: true
+
+  always:
+    - name: Remove temporary kubeadm upload certificates
+      ansible.builtin.file:
+        path: /opt/kubeadm/kubeadm-upload-cert.yml
+        state: absent
+
+- name: Join manager to Kubernetes cluster
+  when: not kubelet_conf.stat.exists
+  block:
+    - name: Generate a short-lived bootstrap token
+      ansible.builtin.command:
+        argv:
+          - kubeadm
+          - token
+          - create
+          - --ttl
+          - "{{ cluster.bootstrap_token_ttl }}"
+      delegate_to: "{{ groups['initial_manager'][0] }}"
+      register: bootstrap_token_result
+      changed_when: true
+      no_log: true
+
+    - name: Create kubeadm config directory
+      ansible.builtin.file:
+        path: /opt/kubeadm
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Configure kubeadm manager join
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/kubeadm-join-manager.yml.j2"
+        dest: /opt/kubeadm/kubeadm-join.yml
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Join manager to Kubernetes control plane
+      ansible.builtin.command:
+        argv:
+          - kubeadm
+          - join
+          - --config
+          - /opt/kubeadm/kubeadm-join.yml
+      become: true
+      register: join_result
+      changed_when: join_result.rc == 0
+      no_log: true
+
+    - name: Wait for manager to register with Kubernetes API
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - get
+          - "node/{{ ansible_facts['hostname'] }}"
+          - --no-headers
+      delegate_to: "{{ groups['initial_manager'][0] }}"
+      become: true
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: node_registered_result
+      changed_when: false
+      retries: 10
+      delay: 10
+      until: node_registered_result.rc == 0
+
+  always:
+    - name: Remove temporary kubeadm join configuration
+      ansible.builtin.file:
+        path: /opt/kubeadm/kubeadm-join.yml
+        state: absent
+
+    - name: Revoke temporary bootstrap token
+      ansible.builtin.command:
+        argv:
+          - kubeadm
+          - token
+          - delete
+          - "{{ bootstrap_token_result.stdout | trim | split('.') | first }}"
+      delegate_to: "{{ groups['initial_manager'][0] }}"
+      become: true
+      when:
+        - bootstrap_token_result is defined
+        - bootstrap_token_result.stdout is defined
+        - bootstrap_token_result.stdout | trim | length > 0
+      changed_when: true
+      failed_when: false
+      no_log: true
+
+- name: Create kubeconfig in host user home directory
+  ansible.builtin.include_tasks:
+    file: ../03-utils/kubeconfig.yml

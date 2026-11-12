@@ -1,0 +1,33 @@
+---
+- name: Configure common foundation and runtime on all cluster nodes
+  hosts: cluster
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  handlers:
+    - name: Include host handlers
+      ansible.builtin.import_tasks: ../handlers/main.yml
+
+  tasks:
+    - name: Unarchive staged offline bundles
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/unarchive.yml
+
+    - name: Configure local offline APT repository
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/apt.yml
+
+    - name: Configure host operating system and kernel settings
+      ansible.builtin.include_tasks:
+        file: ../tasks/10-foundations/host.yml
+
+    - name: Install and configure container runtime components
+      ansible.builtin.include_tasks:
+        file: ../tasks/20-cri/main.yml
+
+    - name: Install Kubernetes node binaries and services
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/00-install/main.yml

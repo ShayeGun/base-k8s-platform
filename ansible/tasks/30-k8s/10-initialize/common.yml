@@ -1,8 +1,8 @@
 ---
-- name: Extra api-server security configs
+- name: Configure Kubernetes API server security
   ansible.builtin.include_tasks:
     file: ../02-security/main.yml
 
-- name: Install kube-vip
+- name: Configure kube-vip static Pod manifest
   ansible.builtin.include_tasks:
     file: ../00-install/kube-vip.yml

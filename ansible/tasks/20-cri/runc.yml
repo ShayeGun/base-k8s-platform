@@ -1,18 +1,18 @@
 ---
-- name: Install runc
+- name: Install runc binary
   ansible.builtin.copy:
-    src: "{{ download_dir.sysd_service }}/{{ packages.runc.artifact }}"
+    src: "{{ download_dir.binaries }}/{{ packages.runc.artifact }}"
     dest: /usr/local/bin/runc
     remote_src: true
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
-- name: Install gVisor binaries
+- name: Install gVisor runsc binaries
   ansible.builtin.unarchive:
-    src: "{{ download_dir.sysd_service }}/{{ packages.runsc.artifact }}"
+    src: "{{ download_dir.binaries }}/{{ packages.runsc.artifact }}"
     dest: /usr/local/bin
     remote_src: true
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"

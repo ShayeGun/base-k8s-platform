@@ -1,30 +1,30 @@
 ---
-- name: Install kubelet
+- name: Install kubelet binary
   ansible.builtin.copy:
-    src: "{{ download_dir.sysd_service }}/{{ packages.kubelet.artifact }}"
+    src: "{{ download_dir.binaries }}/{{ packages.kubelet.artifact }}"
     dest: /usr/local/bin/kubelet
     remote_src: true
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
-- name: Change kubectl service "ExecStart" field
+- name: Update kubelet systemd service ExecStart path
   ansible.builtin.replace:
-    path: "{{ download_dir.sysd_config }}/{{ services.kubelet.artifact }}"
+    path: "{{ download_dir.systemd }}/{{ services.kubelet.artifact }}"
     regexp: '/usr/bin/kubelet'
     replace: '/usr/local/bin/kubelet'
 
-- name: Set systemd to manage kubelet
+- name: Install kubelet systemd unit
   ansible.builtin.copy:
-    src: "{{ download_dir.sysd_config }}/{{ services.kubelet.artifact }}"
+    src: "{{ download_dir.systemd }}/{{ services.kubelet.artifact }}"
     dest: "{{ services.kubelet.path }}/{{ services.kubelet.artifact }}"
     remote_src: true
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: Reload systemd
 
-- name: Enable and start kubelet
+- name: Enable and start kubelet service
   ansible.builtin.systemd_service:
     name: kubelet
     enabled: true

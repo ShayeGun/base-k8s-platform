@@ -1,42 +1,42 @@
 ---
-- name: Install containerd
+- name: Install containerd binaries
   ansible.builtin.unarchive:
-    src: "{{ download_dir.sysd_service }}/{{ packages.containerd.artifact }}"
+    src: "{{ download_dir.binaries }}/{{ packages.containerd.artifact }}"
     dest: /usr/local
     remote_src: true
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
-- name: Set systemd to manage containerd
+- name: Install containerd systemd unit
   ansible.builtin.copy:
-    src: "{{ download_dir.sysd_config }}/{{ services.containerd.artifact }}"
+    src: "{{ download_dir.systemd }}/{{ services.containerd.artifact }}"
     dest: "{{ services.containerd.path }}/{{ services.containerd.artifact }}"
     remote_src: true
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: Reload systemd
 
-- name: Enable and start containerd
+- name: Enable and start containerd service
   ansible.builtin.systemd_service:
     name: containerd
     enabled: true
     state: started
 
-- name: Create containerd config directory
+- name: Create containerd configuration directory
   ansible.builtin.file:
-    path: /etc/containerd/
+    path: /etc/containerd
     state: directory
     owner: root
     group: root
     mode: "0755"
 
-- name: Configure containerd
+- name: Render containerd configuration
   ansible.builtin.template:
     src: "{{ playbook_dir }}/../templates/containerd-config.toml.j2"
     dest: /etc/containerd/config.toml
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: Restart containerd

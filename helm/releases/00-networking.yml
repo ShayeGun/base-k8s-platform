@@ -7,28 +7,28 @@ helmDefaults:
 releases:
   - name: cilium
     namespace: kube-system
-    chart: /opt/helm/charts/cilium-1.20.2.tgz
+    chart: ../charts/cilium-1.20.2.tgz
     values:
       - ../values/networking/cilium.gotmpl
 
   - name: istio-base
     namespace: istio-system
-    chart: /opt/helm/charts/istio-base-1.31.3.tgz
+    chart: ../charts/istio-base-1.31.3.tgz
     needs:
       - kube-system/cilium
 
   - name: istiod
     namespace: istio-system
-    chart: /opt/helm/charts/istiod-1.31.3.tgz
+    chart: ../charts/istiod-1.31.3.tgz
     values:
-      - ../values/networking/istiod.yml
+      - ../values/networking/istiod.yaml
       - profile: ambient
     needs:
       - istio-system/istio-base
 
   - name: istio-cni
     namespace: istio-system
-    chart: /opt/helm/charts/istio-cni-1.31.3.tgz
+    chart: ../charts/istio-cni-1.31.3.tgz
     values:
       - profile: ambient
     needs:
@@ -36,7 +36,7 @@ releases:
 
   - name: ztunnel
     namespace: istio-system
-    chart: /opt/helm/charts/ztunnel-1.31.3.tgz
+    chart: ../charts/ztunnel-1.31.3.tgz
     values:
       - _internal_defaults_do_not_set:
           variant: distroless

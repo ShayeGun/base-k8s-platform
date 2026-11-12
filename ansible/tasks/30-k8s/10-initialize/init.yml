@@ -7,33 +7,33 @@
 - name: Initialize Kubernetes cluster
   when: not kube_apiserver_manifest.stat.exists
   block:
-    - name: Create kubeadm config directory
+    - name: Create kubeadm configuration directory
       ansible.builtin.file:
-        path: /opt/kubeadm/
+        path: /opt/kubeadm
         state: directory
         owner: root
         group: root
         mode: "0755"
 
-    - name: Configure kubeadm
+    - name: Render kubeadm init configuration
       ansible.builtin.template:
         src: "{{ playbook_dir }}/../templates/kubeadm-init.yml.j2"
         dest: /opt/kubeadm/kubeadm-config.yml
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
 
-    - name: Initialize Kubernetes cluster
+    - name: Initialize Kubernetes control plane
       ansible.builtin.command:
         argv:
-        - kubeadm
-        - init
-        - --config
-        - /opt/kubeadm/kubeadm-config.yml
+          - kubeadm
+          - init
+          - --config
+          - /opt/kubeadm/kubeadm-config.yml
 
-    - name: Create kubeconfig in host user home directory
+    - name: Configure kubeconfig in user home directory
       ansible.builtin.include_tasks:
-        file: ../01-utils/kubeconfig.yml
+        file: ../03-utils/kubeconfig.yml
 
   always:
     - name: Remove temporary kubeadm init configuration

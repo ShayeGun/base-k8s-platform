@@ -1,0 +1,46 @@
+---
+- name: Configure and join Kubernetes worker nodes
+  hosts: workers
+  become: true
+  gather_facts: true
+  serial: 1
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  tasks:
+    - name: Load worker container images
+      ansible.builtin.include_tasks:
+        file: ../tasks/20-cri/images.yml
+
+    - name: Join worker node to Kubernetes cluster
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/join-worker.yml
+
+- name: Configure storage worker nodes
+  hosts: workers
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  tasks:
+    - name: Configure designated storage node
+      when: (node_type | default('')) == volume_provisioner.label.value
+      block:
+        - name: Label worker node as storage node
+          ansible.builtin.include_tasks:
+            file: ../tasks/30-k8s/03-utils/label-node.yml
+          vars:
+            node_label:
+              key: "{{ volume_provisioner.label.key }}"
+              value: "{{ volume_provisioner.label.value }}"
+
+        - name: Create local storage data directory
+          ansible.builtin.file:
+            path: "{{ volume_provisioner.data_path }}"
+            state: directory
+            owner: root
+            group: root
+            mode: "0755"

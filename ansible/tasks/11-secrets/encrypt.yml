@@ -1,0 +1,104 @@
+---
+- name: Create secret directory
+  ansible.builtin.file:
+    path: "{{ security.secrets.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Check whether encrypted secrets already exist
+  ansible.builtin.stat:
+    path: "{{ security.secrets.file }}"
+  register: encrypted_secrets_stat
+
+- name: Generate and encrypt secrets
+  when: not encrypted_secrets_stat.stat.exists
+  block:
+    - name: Generate api server key
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - rand
+          - -base64
+          - "32"
+      register: api_server_secret
+      changed_when: true
+      no_log: true
+
+    - name: Generate apisix admin apikey
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - rand
+          - -hex
+          - "32"
+      register: apisix_secret
+      changed_when: true
+      no_log: true
+
+    - name: Read age public recipient
+      ansible.builtin.slurp:
+        src: "{{ security.age.pub_key }}"
+      register: age_pub_file
+
+    - name: Set age public recipient
+      ansible.builtin.set_fact:
+        age_recipient: "{{ age_pub_file.content | b64decode | trim }}"
+
+    - name: Encrypt generated secrets with SOPS
+      ansible.builtin.command:
+        argv:
+          - sops
+          - --config
+          - "{{ security.sops }}"
+          - --filename-override
+          - "{{ security.secrets.file }}"
+          - --encrypt
+          - --age
+          - "{{ age_recipient }}"
+          - --encrypted-regex
+          - '^(api_server|apisix)$'
+          - --input-type
+          - yaml
+          - --output-type
+          - yaml
+          - /dev/stdin
+        stdin: >-
+          {{
+            {
+              'api_server': api_server_secret.stdout | trim,
+              'apisix': apisix_secret.stdout | trim
+            } | to_nice_yaml
+          }}
+        stdin_add_newline: true
+      register: encrypted_secrets
+      environment:
+        SOPS_AGE_KEY_FILE: "{{ security.age.pv_key }}"
+      changed_when: true
+      no_log: true
+
+    - name: Create encrypted secrets file
+      ansible.builtin.copy:
+        content: "{{ encrypted_secrets.stdout }}\n"
+        dest: "{{ security.secrets.file }}"
+        owner: root
+        group: root
+        mode: "0644"
+      no_log: true
+
+  always:
+
+    - name: Clear temporary registered secret variables
+      ansible.builtin.set_fact:
+        api_server_secret: null
+        apisix_secret: null
+        age_recipient: null
+        encrypted_secrets: null
+      no_log: true
+
+- name: Report result
+  ansible.builtin.debug:
+    msg: >-
+      Encrypted secrets file is available at
+      {{ security.secrets.file }}

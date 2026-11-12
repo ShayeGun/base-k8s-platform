@@ -1,0 +1,25 @@
+---
+- name: Install sops binary
+  ansible.builtin.copy:
+    src: "{{ download_dir.binaries }}/{{ packages.sops.artifact }}"
+    dest: /usr/local/bin/sops
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add sops bash completion
+  ansible.builtin.shell:
+    cmd: sops completion bash > /etc/bash_completion.d/sops
+  args:
+    creates: /etc/bash_completion.d/sops
+
+- name: Install age binaries
+  ansible.builtin.unarchive:
+    src: "{{ download_dir.binaries }}/{{ packages.age.artifact }}"
+    dest: /usr/local/bin
+    extra_opts: "--strip-components=1"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"

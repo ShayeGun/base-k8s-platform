@@ -1,4 +1,5 @@
 apiVersion: v2
-name: etcd-apisix-cluster
-description: A Configuration for etcd cluster used by APISIX
-version: 0.0.1
+name: etcd-cluster
+description: Configuration for the dedicated etcd cluster used by APISIX
+type: application
+version: 0.1.0

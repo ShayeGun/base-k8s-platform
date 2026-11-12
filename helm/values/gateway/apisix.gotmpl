@@ -1,12 +1,12 @@
 etcd:
-    enabled: false
+  enabled: false
 
 externalEtcd:
-    host:
-        - http://etcd-cluster-client.apisix-etcd.svc:2379
-    user: ""
-    password: ""
-    existingSecret: ""
+  host:
+    - http://etcd-cluster-client.apisix-etcd.svc:2379
+  user: ""
+  password: ""
+  existingSecret: ""
 
 initContainer:
   image: busybox
@@ -16,32 +16,32 @@ rbac:
   create: true
 
 ingress-controller:
-    enabled: false
+  enabled: false
 
 serviceAccount:
-    create: true
-    name: "apisix"
+  create: true
+  name: "apisix"
 
 apisix:
-      admin:
-        enabled: true
-        enable_admin_ui: true
-        credentials:
-            admin: {{ .Values.gateway_api.admin.apikey | quote }}
-        allow:
-          ipList:
-            - "0.0.0.0/0"
+  admin:
+    enabled: true
+    enable_admin_ui: true
+    credentials:
+      admin: {{ .Values.gateway.admin.apikey | quote }}
+    allow:
+      ipList:
+        - "0.0.0.0/0"
 
-        {{- if and (hasKey .Values.gateway_api.admin "service_ip") (ne (.Values.gateway_api.admin.service_ip | toString) "") }}
-        type: LoadBalancer
-        loadBalancerIP: {{ .Values.gateway_api.admin.service_ip | quote }}
-        annotations:
-            io.cilium/lb-ipam-ips: {{ .Values.gateway_api.admin.service_ip | quote }}
-        {{- end }}
+    {{- if and (hasKey .Values.gateway.admin "service_ip") (ne (.Values.gateway.admin.service_ip | toString) "") }}
+    type: LoadBalancer
+    loadBalancerIP: {{ .Values.gateway.admin.service_ip | quote }}
+    annotations:
+      io.cilium/lb-ipam-ips: {{ .Values.gateway.admin.service_ip | quote }}
+    {{- end }}
 
 service:
-    type: LoadBalancer
-    annotations:
-        io.cilium/lb-ipam-ips: {{ .Values.gateway_api.service_ip | quote }}
-    spec:
-        allocateLoadBalancerNodePorts: false
+  type: LoadBalancer
+  annotations:
+    io.cilium/lb-ipam-ips: {{ .Values.gateway.service_ip | quote }}
+  spec:
+    allocateLoadBalancerNodePorts: false

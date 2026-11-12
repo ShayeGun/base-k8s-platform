@@ -1,0 +1,60 @@
+---
+- name: Configure base Kubernetes control-plane node requirements
+  hosts: managers
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  tasks:
+    - name: Load control-plane container images
+      ansible.builtin.include_tasks:
+        file: ../tasks/20-cri/images.yml
+
+    - name: Install control-plane CLI tools
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/01-cli/main.yml
+
+    - name: Install secret tooling and decrypt cluster secrets
+      ansible.builtin.include_tasks:
+        file: ../tasks/11-secrets/manager.yml
+
+    - name: Configure API server security and kube-vip static Pod
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/common.yml
+
+- name: Bootstrap initial Kubernetes control-plane node
+  hosts: initial_manager
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  tasks:
+    - name: Initialize Kubernetes control plane
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/init.yml
+
+    - name: Apply encryption on REST
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/02-security/migrate_secrets.yml
+
+    - name: Configure CoreDNS for isolated cluster networking
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/coredns.yml
+
+- name: Join additional control-plane nodes to cluster
+  hosts: joining_managers
+  become: true
+  gather_facts: true
+  serial: 1 # Sequential join required for stacked etcd membership
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  tasks:
+    - name: Join node to Kubernetes control plane
+      ansible.builtin.include_tasks:
+        file: ../tasks/30-k8s/10-initialize/join-manager.yml

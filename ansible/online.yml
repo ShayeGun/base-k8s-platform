@@ -1,3 +1,3 @@
 ---
-- name: Download cluster all components and requirements
-  ansible.builtin.import_playbook: groups/online.yml
+- name: Prepare offline platform artifacts and dependencies
+  ansible.builtin.import_playbook: playbooks/online.yml

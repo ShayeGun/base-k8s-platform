@@ -1,0 +1,8 @@
+---
+- name: Install SOPS and age binaries
+  ansible.builtin.include_tasks:
+    file: install.yml
+
+- name: Decrypt cluster secrets into runtime facts
+  ansible.builtin.include_tasks:
+    file: decrypt.yml

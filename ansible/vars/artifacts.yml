@@ -1,0 +1,376 @@
+apt_packages:
+  - chrony
+  - ca-certificates
+  - curl
+  - tar
+  - tree
+  - vim
+  - openssl
+  - bash-completion
+
+packages:
+  helm:
+    version: "4.3.0"
+    url: "https://get.helm.sh/helm-v{{ packages.helm.version }}-linux-amd64.tar.gz"
+    checksum: "sha256:86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f54fb"
+    artifact: "helm-v{{ packages.helm.version }}-linux-amd64.tar.gz"
+
+  helm_diff:
+    version: "3.15.14"
+    url: "https://github.com/databus23/helm-diff/releases/download/v{{ packages.helm_diff.version }}/helm-diff-linux-amd64.tgz"
+    checksum: "sha256:db778772d76f1e8f2e8f0c9c2ca1330c04c3ef0ad0ad25d5010658e888f06031"
+    artifact: "helm-diff-v{{ packages.helm_diff.version }}-linux-amd64.tar.gz"
+
+  helmfile:
+    version: "1.8.0"
+    url: "https://github.com/helmfile/helmfile/releases/download/v{{ packages.helmfile.version }}/helmfile_{{ packages.helmfile.version }}_linux_amd64.tar.gz"
+    checksum: "sha256:35d5d39fc608342b23fc7ce1dd0c3bf0c96cc07ec3796507ab6894a5d172bf20"
+    artifact: "helmfile-v{{ packages.helmfile.version }}-linux-amd64.tar.gz"
+
+  runc:
+    version: "1.5.1"
+    url: "https://github.com/opencontainers/runc/releases/download/v{{ packages.runc.version }}/runc.amd64"
+    checksum: "sha256:177df879d50c913eb205e898d5c1c05a18f574053c0ce5524c471208eaf06f6f"
+    artifact: "runc-v{{ packages.runc.version }}"
+
+  containerd:
+    version: "2.4.1"
+    url: "https://github.com/containerd/containerd/releases/download/v{{ packages.containerd.version }}/containerd-{{ packages.containerd.version }}-linux-amd64.tar.gz"
+    checksum: "sha256:d65eda6a188aac1006848d8060099be88ba9c4bcddbfd9a23a961194710d0dd4"
+    artifact: "containerd-v{{ packages.containerd.version }}-linux-amd64.tar.gz"
+
+  cni:
+    version: "1.9.1"
+    url: https://github.com/containernetworking/plugins/releases/download/v{{ packages.cni.version }}/cni-plugins-linux-amd64-v{{ packages.cni.version }}.tgz
+    checksum: "sha256:b98f74a0f8522f0a83867178729c1aa70f2158f90c45a2ca8fa791db1c76b303"
+    artifact: "cni-v{{ packages.cni.version }}-linux-amd64.tar.gz"
+
+  runsc:
+    version: "20260921.0"
+    url: "https://github.com/google/gvisor/releases/download/release-{{ packages.runsc.version }}/gvisor-x86_64.tar.zstd"
+    checksum: "sha256:e3e7776afd36b08431c668a60f4271f9e9787ce0def960be680acb1681af3861"
+    artifact: "runsc-v{{ packages.runsc.version }}.tar.zstd"
+
+  nerdctl:
+    version: "2.4.0"
+    url: "https://github.com/containerd/nerdctl/releases/download/v{{ packages.nerdctl.version }}/nerdctl-{{ packages.nerdctl.version }}-linux-amd64.tar.gz"
+    checksum: "sha256:778de08116e96267933fe76b480ecedd5a4f739e32f0be27009819f221b14021"
+    artifact: "nerdctl-v{{ packages.nerdctl.version }}-linux-amd64.tar.gz"
+
+  crictl:
+    version: "1.37.0"
+    url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ packages.crictl.version }}/crictl-v{{ packages.crictl.version }}-linux-amd64.tar.gz"
+    checksum: "sha256:67c983ee8a6bbce73d39a186e633c5fe4f8a70e62171ac3bd92a9c1b2c601670"
+    artifact: "crictl-v{{ packages.crictl.version }}-linux-amd64.tar.gz"
+
+  kubeadm:
+    version: "1.37.1"
+    url: "https://dl.k8s.io/release/v{{ packages.kubeadm.version }}/bin/linux/amd64/kubeadm"
+    checksum: "sha256:087b6340dcea496f2cde2b3888ecd414354c08a0aceabd6b7ca195cccb66ecd3"
+    artifact: "kubeadm-v{{ packages.kubeadm.version }}"
+
+  kubelet:
+    version: "1.37.1"
+    url: "https://dl.k8s.io/release/v{{ packages.kubelet.version }}/bin/linux/amd64/kubelet"
+    checksum: "sha256:cee008c1640c3b41820ef31d35b3cffc132b0c4b78c288be2b8022ebc7aa8293"
+    artifact: "kubelet-v{{ packages.kubelet.version }}"
+
+  kubectl:
+    version: "1.37.1"
+    url: "https://dl.k8s.io/release/v{{ packages.kubectl.version }}/bin/linux/amd64/kubectl"
+    checksum: "sha256:65691ff77eb6fa44c908b77a1082c9f092c3b9733b5cefabec0d1104890e21a8"
+    artifact: "kubectl-v{{ packages.kubectl.version }}"
+
+  cilium_cli:
+    version: "0.20.1"
+    url: "https://github.com/cilium/cilium-cli/releases/download/v{{ packages.cilium_cli.version }}/cilium-linux-amd64.tar.gz"
+    checksum: "sha256:24e817dcfcc8a12e325ce7547617bcbcf171c5b0b335bb24d2bb1207ba047f61"
+    artifact: "cilium-cli-v{{ packages.cilium_cli.version }}-linux-amd64.tar.gz"
+
+  k9s:
+    version: "0.51.0"
+    url: "https://github.com/derailed/k9s/releases/download/v{{ packages.k9s.version }}/k9s_linux_amd64.deb"
+    checksum: "sha256:56b539a509eb2d6357cf4f575ed38c089f0e4880c95f79a70196b54f14954908"
+    artifact: "k9s-v{{ packages.k9s.version }}.deb"
+
+  age:
+    version: "1.3.2"
+    url: "https://github.com/FiloSottile/age/releases/download/v{{ packages.age.version }}/age-v{{ packages.age.version }}-linux-amd64.tar.gz"
+    checksum: "sha256:cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10"
+    artifact: "age-v{{ packages.age.version }}-linux-amd64.tar.gz"
+
+  sops:
+    version: "3.13.3"
+    url: "https://github.com/getsops/sops/releases/download/v{{ packages.sops.version }}/sops-v{{ packages.sops.version }}.linux.amd64"
+    checksum: "sha256:e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b"
+    artifact: "sops-v{{ packages.sops.version }}.deb"
+
+services:
+  containerd:
+    url: "https://raw.githubusercontent.com/containerd/containerd/main/containerd.service"
+    path: "/usr/local/lib/systemd/system"
+    artifact: "containerd.service"
+  kubelet:
+    url: "https://raw.githubusercontent.com/kubernetes/release/v0.16.2/cmd/krel/templates/latest/kubelet/kubelet.service"
+    path: "/usr/local/lib/systemd/system"
+    artifact: "kubelet.service"
+  kubeadm:
+    url: "https://raw.githubusercontent.com/kubernetes/release/v0.16.2/cmd/krel/templates/latest/kubeadm/10-kubeadm.conf"
+    path: "/usr/lib/systemd/system/kubelet.service.d"
+    artifact: "10-kubeadm.conf"
+
+images:
+  #######################
+  ######### core ########
+  #######################
+  - name: registry.k8s.io/kube-apiserver
+    tag: v1.37.1
+    archive: kube-apiserver_v1.37.1.tar
+    digest: 1f207ab66b1ca6579dd5bf1024396015ca2a0f638157a7741d2d88d7b3c82c51
+    group: managers
+
+  - name: registry.k8s.io/kube-controller-manager
+    tag: v1.37.1
+    archive: kube-controller-manager_v1.37.1.tar
+    digest: 24366808a9bf9dfefb3aa171f0fadac61a1dde50a43e578c42eb3d8785cb606e
+    group: managers
+
+  - name: registry.k8s.io/kube-scheduler
+    tag: v1.37.1
+    archive: kube-scheduler_v1.37.1.tar
+    digest: e4fc6f552722518aaa7d6cddbb8b638df275a5adbc5d1e5d59276af52692fb2c
+    group: managers
+
+  - name: registry.k8s.io/coredns/coredns
+    tag: v1.14.6
+    archive: coredns_v1.14.6.tar
+    digest: 1ba6f47265602e2e50a9c4669e3a955e4298a0d30dc82f39293d4bf1a851e0ff
+    group: cluster
+
+  - name: registry.k8s.io/pause
+    tag: 3.10.2
+    archive: pause_3.10.2.tar
+    digest: 412c4a7219cb8a299a37337f3d87810c5340095322e15594a1637785adad0f17
+    group: cluster
+
+  - name: registry.k8s.io/etcd
+    tag: 3.7.0-0
+    archive: etcd_3.7.0-0.tar
+    digest: 1f445fa5dd06b08f3c0cf9f46e2891e9bc66cbf7e0b9c66627c40658edf4bc98
+    group: managers
+
+  - name: ghcr.io/kube-vip/kube-vip
+    tag: v1.3.1
+    archive: kube-vip_v1.3.1.tar
+    digest: 1962f9daf226503f7e6b107f595cb28b7917fd2d0113957075e19a3e5a6c1e33
+    group: managers
+
+  #######################
+  ######### CNI #########
+  #######################
+
+  - name: quay.io/cilium/cilium
+    tag: v1.20.2
+    archive: cilium_1.20.2.tar
+    digest: 2939231d0d3e3ebddcd80fffa168b7ddcc78fdf0dc864d1c8c126ff523c54f01
+    group: cluster
+
+  - name: quay.io/cilium/operator-generic
+    tag: v1.20.2
+    archive: cilium-operator-generic_1.20.2.tar
+    digest: 64d8798350e8569b8e7622563fed6e44dce2625f311e4651b774816516c744fc
+    group: managers
+
+  #######################
+  ####### volumes #######
+  #######################
+
+  - name: docker.io/rancher/local-path-provisioner
+    tag: v0.0.37
+    archive: local-path-provisioner_0.0.37.tar
+    digest: e757967a5ec338f6a9b371c5a9688bedaa8c3578ea3dd4db329ea0084be0a86f
+    group: workers
+
+  #######################
+  ######### mesh ########
+  #######################
+
+  - name: docker.io/istio/pilot
+    tag: 1.31.3-distroless
+    archive: pilot_1.31.3.tar
+    digest: 1b0e5f3bddf0cc472dce4dc44bb1d6880b6b598df5fe2eb5e5b7b88627debf6a
+    group: managers
+
+  - name: docker.io/istio/install-cni
+    tag: 1.31.3-distroless
+    archive: install-cni_1.31.3.tar
+    digest: b352e72d195863484c9d3d07f0ac9c054365431df09f832de66797f0eb93bb30
+    group: cluster
+
+  - name: docker.io/istio/ztunnel
+    tag: 1.31.3-distroless
+    archive: ztunnel_1.31.3.tar
+    digest: 5235c45bbfc4f11c45496ea69906aa4d305264f8b29bf5b2ba6e785ef82818f7
+    group: cluster
+
+  #######################
+  ####### utility #######
+  #######################
+
+  - name: docker.io/nicolaka/netshoot
+    tag: v0.16
+    archive: netshoot_0.16.tar
+    digest: b09d9b21381f47a79b3cbcb30da25266dc17186ea00ae65e99fdc51396f48e70
+    group: cluster
+
+  - name: docker.io/library/busybox
+    tag: 1.38.0-glibc
+    archive: busybox_1.38.0-glibc.tar
+    digest: 99813cb178ace2cd9c6c53ee3bddef5d2f5708aa438335111d7a9e3c5e1aaebe
+    group: workers
+
+  - name: docker.io/alpine/kubectl
+    tag: 1.37.1
+    archive: kubectl_1.37.1.tar
+    digest: a5d0fbecab3f7b6c2ab7398f1daa73a3e0ed6ece18556d21698233e9e3759cc7
+    group: workers
+
+  #######################
+  ####### gateway #######
+  #######################
+
+  - name: ghcr.io/cozystack/etcd-operator
+    tag: v0.5.8
+    archive: etcd-operator_0.5.8.tar
+    digest: 89031c325cc5c63552e38885723e3c1fb4bfc031f80bb62b699e635ebeb6a63b
+    group: cluster
+
+  - name: quay.io/coreos/etcd
+    tag: v3.7.2
+    archive: etcd_v3.7.2.tar
+    digest: e9afa62b1e914f02db62e5c46a7a140d8cdf026f2ed888cab4e5a142ec4d06fd
+    group: workers
+
+  - name: docker.io/apache/apisix
+    tag: 3.19.0-ubuntu
+    archive: apisix_3.19.0-ubuntu.tar
+    digest: bb4958b943949b3543353481eff1333e10b3323c6095dd0af4406de2b8cf738e
+    group: workers
+
+  - name: docker.io/apache/apisix-ingress-controller
+    tag: 2.2.0
+    archive: apisix-ingress-controller_2.2.0.tar
+    digest: 5c5efa4c7f2aa60e21d20fefc0388ad52faaefb71b840ee1e11ece303cd8ed86
+    group: managers
+
+  - name: ghcr.io/api7/adc
+    tag: 0.27.1
+    archive: apisix-ingress-controller-adc_0.27.1.tar
+    digest: f65f53dd966827ff485471d00b9ce8ca146f7aba187519817b7453e476a274b8
+    group: managers
+
+  #######################
+  ####### Logging #######
+  #######################
+  - name: ghcr.io/axoflow/axosyslog
+    tag: 4.28.0
+    archive: axosyslog_4.28.0.tar
+    digest: 40a965250acf4bd45a3ff2b2621a1751ee832e47f359e871508f1cefd0b227a3
+    group: workers
+
+  - name: docker.io/falcosecurity/falco
+    tag: 0.45.2-debian
+    archive: falco_0.45.2-debian.tar
+    digest: c21fc08035d67a0ea98b2c211f20fcef7fa8a764073e7415d4ac3039531eba86
+    group: cluster
+
+  - name: docker.io/falcosecurity/falcoctl
+    tag: 0.14.3
+    archive: falcoctl_0.14.3.tar
+    digest: 2230fb4802aafe09455b58d38f8f1faedd8f09f042e9a18fffd397e63488c023
+    group: cluster
+
+  - name: docker.io/falcosecurity/falcosidekick
+    tag: 2.35.1
+    archive: falcosidekick_2.35.1.tar
+    digest: a9bb60d2c7742febd912315ca1155839abc0199bf322c58d3adbb8b0849fadb9
+    group: workers
+
+  - name: ghcr.io/fluent/fluent-bit
+    tag: 5.1.5
+    archive: fluentbit_5.1.5.tar
+    digest: 2740f387f6e68fab66d28e4fa6a853387b9cab6ffb4cb78958f69bba4eb0e7b4
+    group: cluster
+
+charts:
+  - name: cilium
+    chart: cilium
+    url: https://helm.cilium.io/
+    version: 1.20.2
+    # namespace: kube-system
+
+  - name: istio-base
+    chart: base
+    url: https://blob.istio.io/istio-release/charts
+    version: 1.31.3
+    # namespace: istio-system
+
+  - name: istiod
+    chart: istiod
+    url: https://blob.istio.io/istio-release/charts
+    version: 1.31.3
+    # namespace: istio-system
+
+  - name: istio-cni
+    chart: cni
+    url: https://blob.istio.io/istio-release/charts
+    version: 1.31.3
+    # namespace: istio-system
+
+  - name: ztunnel
+    chart: ztunnel
+    url: https://blob.istio.io/istio-release/charts
+    version: 1.31.3
+    # namespace: istio-system
+
+  - name: etcd-operator
+    chart: etcd-operator
+    url: oci://ghcr.io/cozystack/charts
+    version: 0.5.8
+    # namespace: apisix-etcd
+
+# https://github.com/apache/apisix-helm-chart/tree/master
+  - name: apisix
+    chart: apisix
+    url: https://apache.github.io/apisix-helm-chart
+    version: 2.18.2
+    # namespace: apisix-ingress
+
+# https://github.com/apache/apisix-helm-chart/tree/master
+  - name: apisix-ingress-controller
+    chart: apisix-ingress-controller
+    url: https://apache.github.io/apisix-helm-chart
+    version: 1.4.1
+    # namespace: apisix-ingress
+
+# https://github.com/axoflow/axosyslog/tree/main/charts/axosyslog
+  - name: axosyslog
+    chart: axosyslog
+    url: https://axoflow.github.io/axosyslog
+    version: 0.22.0
+
+  - name: falco
+    chart: falco
+    url: https://falcosecurity.github.io/charts
+    version: 9.2.2
+
+  - name: falcosidekick
+    chart: falcosidekick
+    url: https://falcosecurity.github.io/charts
+    version: 0.14.2
+
+# https://github.com/fluent/helm-charts/tree/main/charts/fluent-bit-collector
+  - name: fluentbit
+    chart: fluent-bit-collector
+    url: oci://ghcr.io/fluent/helm-charts
+    version: 1.1.3

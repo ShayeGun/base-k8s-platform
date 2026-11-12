@@ -7,6 +7,15 @@
     group: root
     mode: "0755"
 
+- name: Resolve kube-vip image reference from artifacts catalog
+  ansible.builtin.set_fact:
+    kube_vip_image: >-
+      {{
+        (images | selectattr('name', 'equalto', 'ghcr.io/kube-vip/kube-vip') | first).name
+        ~ ':' ~
+        (images | selectattr('name', 'equalto', 'ghcr.io/kube-vip/kube-vip') | first).tag
+      }}
+
 - name: Generate kube-vip static Pod manifest
   ansible.builtin.command:
     argv:
@@ -16,7 +25,7 @@
       - run
       - --rm
       - --net=host
-      - "ghcr.io/kube-vip/kube-vip:v1.3.1"
+      - "{{ kube_vip_image }}"
       - manifest
       - pod
       - --interface

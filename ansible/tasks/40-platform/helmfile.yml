@@ -1,0 +1,45 @@
+---
+- name: Stage project Helm directory
+  ansible.builtin.copy:
+    dest: "{{ config_dir.common }}"
+    src: "{{ download_dir.common }}/helm"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Stage downloaded Helm chart archives
+  ansible.builtin.copy:
+    dest: "{{ config_dir.helm }}"
+    src: "{{ download_dir.charts }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create Helmfile environments directory
+  ansible.builtin.file:
+    path: "{{ config_dir.helm }}/environments"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Render Helmfile global environment values
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../templates/helmfile-environment.yml.j2"
+    dest: "{{ config_dir.helm }}/environments/main.yml"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Sync platform Helmfile releases
+  ansible.builtin.command:
+    argv:
+      - helmfile
+      - -f
+      - "{{ config_dir.helm }}/helmfile.yml"
+      - sync
+  register: helmfile_result
+  changed_when: helmfile_result.rc == 0

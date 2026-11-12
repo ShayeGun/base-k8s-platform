@@ -11,10 +11,10 @@ helmfiles:
   - path: releases/01-networking-config.yml
     inherits:
       - environments
-  - path: releases/10-volume.yml
+  - path: releases/10-storage.yml
     inherits:
       - environments
-  - path: releases/20-gateway-api.yml
+  - path: releases/20-gateway.yml
     inherits:
       - environments
   - path: releases/30-observability.yml

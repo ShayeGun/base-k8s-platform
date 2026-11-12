@@ -1,16 +1,20 @@
 ---
-- name: Install runc
+- name: Install runc and gVisor runsc
   ansible.builtin.include_tasks:
     file: runc.yml
-- name: Install CNI
+
+- name: Install CNI plugins
   ansible.builtin.include_tasks:
     file: cni.yml
-- name: Install nerdctl
+
+- name: Install nerdctl CLI
   ansible.builtin.include_tasks:
     file: nerdctl.yml
-- name: Install crictl
+
+- name: Install crictl CLI
   ansible.builtin.include_tasks:
     file: crictl.yml
-- name: Install Containerd
+
+- name: Install and configure containerd
   ansible.builtin.include_tasks:
     file: containerd.yml

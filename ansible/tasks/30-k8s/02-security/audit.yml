@@ -1,11 +1,14 @@
 ---
 - name: Create audit configuration directory
   ansible.builtin.file:
-    path: "{{ cluster.api_server.audit.log_dir }}"
+    path: "{{ item }}"
     state: directory
     owner: root
     group: root
     mode: "0755"
+  loop:
+    - "{{ cluster.api_server.audit.log_dir }}"
+    - "{{ cluster.api_server.audit.policy | dirname }}"
 
 - name: Deploy audit policy configuration
   ansible.builtin.copy:

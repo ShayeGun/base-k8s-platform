@@ -1,10 +1,10 @@
 ---
-- name: Remove image archive directory
+- name: Remove existing export directory
   ansible.builtin.file:
     path: "{{ export_dir }}"
     state: absent
 
-- name: Find downloaded directories
+- name: Find downloaded artifact directories
   ansible.builtin.find:
     paths: "{{ download_dir.common }}"
     file_type: directory
@@ -18,7 +18,7 @@
     group: "{{ non_root.group }}"
     mode: "0755"
 
-- name: Archive each directory
+- name: Archive each downloaded artifact directory
   ansible.builtin.archive:
     path: "{{ item.path }}"
     dest: "{{ export_dir }}/{{ item.path | basename }}.tgz"
@@ -30,9 +30,9 @@
   loop_control:
     label: "{{ item.path }}"
 
-- name: Archive Helm configuration directory
+- name: Archive project Helm directory
   ansible.builtin.archive:
-    path: "{{ config_dir.desktop }}/helm"
+    path: "{{ playbook_dir | dirname | dirname }}/helm"
     dest: "{{ export_dir }}/helm.tgz"
     format: gz
     owner: "{{ non_root.user }}"

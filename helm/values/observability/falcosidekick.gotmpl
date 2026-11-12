@@ -1,0 +1,12 @@
+replicaCount: 1
+
+config:
+  debug: false
+
+  # Forward Falco events to AxoSyslog.
+  syslog:
+    host: "{{ .Values.observability.syslog.svc }}.{{ .Values.observability.syslog.ns }}.svc.cluster.local"
+    port: "514"
+    protocol: "tcp"
+    format: "json"
+    minimumpriority: "debug"

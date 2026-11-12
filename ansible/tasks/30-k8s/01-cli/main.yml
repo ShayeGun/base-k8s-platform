@@ -1,0 +1,12 @@
+---
+- name: Install Helm, Helm plugins, and Helmfile
+  ansible.builtin.include_tasks:
+    file: helm.yml
+
+- name: Install Cilium CLI
+  ansible.builtin.include_tasks:
+    file: cilium.yml
+
+- name: Install k9s CLI
+  ansible.builtin.include_tasks:
+    file: k9s.yml

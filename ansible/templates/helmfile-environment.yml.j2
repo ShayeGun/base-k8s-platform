@@ -1,0 +1,39 @@
+---
+cluster:
+  api_server:
+    host: "{{ cilium.api_server.host }}"
+    port: "{{ cilium.api_server.port | int }}"
+
+  network:
+    pod_cidr: "{{ cilium.pod_cidr }}"
+    interfaces:
+      - "{{ cilium.interface.internal }}"
+      - "{{ cilium.interface.external }}"
+    internal_interface: "{{ cilium.interface.internal }}"
+    external_interface: "{{ cilium.interface.external }}"
+    port: "{{ cilium.tunnel_port | int }}"
+
+  load_balancer:
+    name: "{{ cilium.load_balancer.name }}"
+    pool:
+      start: "{{ cilium.load_balancer.pool.start }}"
+      stop: "{{ cilium.load_balancer.pool.stop }}"
+
+storage:
+  local_path_provisioner:
+    label:
+      key: "{{ volume_provisioner.label.key }}"
+      value: "{{ volume_provisioner.label.value }}"
+    path: "{{ volume_provisioner.data_path }}"
+
+gateway:
+  admin:
+    apikey: "{{ apisix_admin_secret }}"
+    service_ip: "{{ gateway.admin.direct_ip_access | default('', true) }}"
+  service_ip: "{{ gateway.service.ip }}"
+  domain: "{{ gateway.domain }}"
+
+observability:
+  syslog:
+    ns: "{{ syslog.namespace }}"
+    svc: "{{ syslog.service }}"

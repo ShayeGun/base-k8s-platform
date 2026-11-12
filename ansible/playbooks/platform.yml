@@ -1,0 +1,13 @@
+---
+- name: Deploy shared platform services
+  hosts: initial_manager
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/artifacts.yml
+
+  tasks:
+    - name: Reconcile platform Helmfile releases
+      ansible.builtin.include_tasks:
+        file: ../tasks/40-platform/helmfile.yml

@@ -1,14 +1,14 @@
 ---
-- name: Install kubectl
+- name: Install kubectl binary
   ansible.builtin.copy:
-    src: "{{ download_dir.sysd_service }}/{{ packages.kubectl.artifact }}"
+    src: "{{ download_dir.binaries }}/{{ packages.kubectl.artifact }}"
     dest: /usr/local/bin/kubectl
     remote_src: true
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
-- name: Add kubectl auto-completion
+- name: Add kubectl bash completion
   ansible.builtin.shell:
     cmd: kubectl completion bash > /etc/bash_completion.d/kubectl
   args:

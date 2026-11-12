@@ -1,10 +1,12 @@
 ---
-- name: Install kubectl
+- name: Install kubectl binary
   ansible.builtin.include_tasks:
     file: kubectl.yml
-- name: Install kubeadm
+
+- name: Install kubeadm binary and systemd drop-in
   ansible.builtin.include_tasks:
     file: kubeadm.yml
-- name: Install kubelet
+
+- name: Install kubelet binary and systemd service
   ansible.builtin.include_tasks:
     file: kubelet.yml

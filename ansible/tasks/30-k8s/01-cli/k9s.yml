@@ -1,0 +1,5 @@
+---
+- name: Install k9s package
+  ansible.builtin.apt:
+    deb: "{{ download_dir.binaries }}/{{ packages.k9s.artifact }}"
+    state: present

@@ -1,0 +1,5 @@
+nodeSelector:
+  {{ .Values.storage.local_path_provisioner.label.key | quote }}: {{ .Values.storage.local_path_provisioner.label.value | quote }}
+
+storage:
+  defaultPath: {{ .Values.storage.local_path_provisioner.path | quote }}
