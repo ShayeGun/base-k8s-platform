@@ -1,4 +1,13 @@
-# Base Kubernetes Platform
+# ☸️ Base Kubernetes Platform
+
+![Kubernetes](https://img.shields.io/badge/Orchestration-Kubernetes_%7C_kubeadm-326CE5?logo=kubernetes&logoColor=white)
+![Ansible](https://img.shields.io/badge/Automation-Ansible_%7C_Helmfile-EE0000?logo=ansible&logoColor=white)
+![Cilium](https://img.shields.io/badge/CNI_%26_LB-Cilium_eBPF-F8C517?logo=cilium&logoColor=black)
+![Istio](https://img.shields.io/badge/Service_Mesh-Istio_Ambient-466BB0?logo=istio&logoColor=white)
+![APISIX](https://img.shields.io/badge/Gateway-Apache_APISIX-E8433E?logo=apache&logoColor=white)
+![Logging](https://img.shields.io/badge/Logging-Fluent_Bit_%7C_AxoSyslog-49BDA5?logo=fluentbit&logoColor=white)
+![Security](https://img.shields.io/badge/Security-Falco_%7C_SOPS_%2B_age-00B4AB?logo=linux&logoColor=white)
+![Ubuntu](https://img.shields.io/badge/Target-Ubuntu_24.04_Air--Gapped-E95420?logo=ubuntu&logoColor=white)
 
 An Ansible-driven, air-gapped Kubernetes platform reference implementation for customer-provided on-premises infrastructure.
 
@@ -8,27 +17,31 @@ The repository is both a working implementation and an adaptable engineering ref
 
 > **Project status:** The platform has been tested on virtual machines with a three-node control plane. The control-plane count and worker membership are configurable. Physical-server deployments and customer-specific network designs should be validated independently. This is a reference implementation, not a claim of production readiness for every environment.
 
-## Contents
+---
 
-- [Goals and scope](#goals-and-scope)
-- [Architecture](#architecture)
-- [Technology stack](#technology-stack)
-- [High availability and cluster lifecycle](#high-availability-and-cluster-lifecycle)
-- [Air-gapped deployment model](#air-gapped-deployment-model)
-- [Prerequisites](#prerequisites)
-- [Configuration](#configuration)
-- [Deployment](#deployment)
-- [Platform components](#platform-components)
-- [Secrets and security](#secrets-and-security)
-- [Logging and observability](#logging-and-observability)
-- [Application team responsibilities](#application-team-responsibilities)
-- [Repository layout](#repository-layout)
-- [Validation](#validation)
-- [Limitations and operational considerations](#limitations-and-operational-considerations)
-- [Roadmap](#roadmap)
-- [License](#license)
+## 🧭 Contents
 
-## Goals and scope
+- 🎯 [Goals and scope](#-goals-and-scope)
+- 🏗️ [Architecture](#-architecture)
+- 🧰 [Technology stack](#-technology-stack)
+- 🔄 [High availability and cluster lifecycle](#-high-availability-and-cluster-lifecycle)
+- 📦 [Air-gapped deployment model](#-air-gapped-deployment-model)
+- ✅ [Prerequisites](#-prerequisites)
+- ⚙️ [Configuration](#-configuration)
+- 🚀 [Deployment](#-deployment)
+- 🧩 [Platform components](#-platform-components)
+- 🔐 [Secrets and security](#-secrets-and-security)
+- 📊 [Logging and observability](#-logging-and-observability)
+- 🤝 [Application team responsibilities](#-application-team-responsibilities)
+- 🗂️ [Repository layout](#-repository-layout)
+- 🧪 [Validation](#-validation)
+- ⚠️ [Limitations and operational considerations](#-limitations-and-operational-considerations)
+- 🗺️ [Roadmap](#-roadmap)
+- 📄 [License](#-license)
+
+---
+
+## 🎯 Goals and scope
 
 The platform is intended for on-premises environments where the customer provides and administers the underlying infrastructure, while the platform operator installs and configures Kubernetes and its foundational services.
 
@@ -56,11 +69,15 @@ The project automates:
 
 The customer remains responsible for supplying the compute, network, IP allocations, and storage capacity. The project does not provision VMs, configure hypervisors, allocate customer networks, or manage the physical infrastructure lifecycle. It also does not deploy or operate application-specific workloads.
 
-## Overview
+---
+
+## 🖼️ Overview
 
 ![Overview](./assets/Base%20Kubernetes%20Platform%20Architecture.png)
 
-## Architecture
+---
+
+## 🏗️ Architecture
 
 The platform has three main layers:
 
@@ -142,7 +159,9 @@ The configured VIP must be available on the selected interface and on a network 
 
 APISIX and its Gateway API controller are enrolled in Ambient Mesh. Application namespaces/workloads should also be enrolled when mesh controls are required. When both sides participate in the mesh, APISIX-to-workload traffic can be governed by the Ambient data plane and applicable policies. Routing to workloads outside the mesh bypasses those mesh-level controls and is not the intended secure deployment model.
 
-## Technology stack
+---
+
+## 🧰 Technology stack
 
 | Area | Technology |
 |---|---|
@@ -165,7 +184,9 @@ APISIX and its Gateway API controller are enrolled in Ambient Mesh. Application 
 
 Versions are maintained in Ansible variables, artifact definitions, image references, Helmfile releases, and chart values. Consult those files for the exact versions used by a particular repository revision.
 
-## High availability and cluster lifecycle
+---
+
+## 🔄 High availability and cluster lifecycle
 
 ### Control plane
 
@@ -194,7 +215,9 @@ The Ansible tasks include checks intended to avoid reinitializing an already ini
 
 Repeatability should not be interpreted as a guarantee that every upgrade, rollback, configuration change, or partial-failure recovery is automatically safe. Validate changes and recovery procedures in a representative environment before applying them to important workloads.
 
-## Air-gapped deployment model
+---
+
+## 📦 Air-gapped deployment model
 
 Deployment has two distinct phases.
 
@@ -261,7 +284,9 @@ flowchart TD
 
 Image digests are verified during online preparation. The current workflow does not generate a separate checksum manifest for the exported transfer bundle. Use the customer's approved integrity-verification process for the bundle itself when required.
 
-## Prerequisites
+---
+
+## ✅ Prerequisites
 
 ### Operating system and automation
 
@@ -293,7 +318,9 @@ The project supports both single-NIC and dual-NIC node layouts:
 
 Interface names and IP addresses are environment-specific. Do not copy the example interface names or IP addresses from the repository into another environment without validating them.
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 Environment-specific settings are maintained in the Ansible inventory and `ansible/group_vars/all/main.yml`, while pinned artifact versions, checksums, and digests are defined in `ansible/vars/artifacts.yml`. Update the inventory and group variables for each customer environment rather than treating lab values as universal defaults.
 
@@ -377,7 +404,9 @@ The configured VIP is used as the stable API endpoint by kubeadm and by Cilium. 
 
 The Cilium LoadBalancer pool must use addresses reserved for Kubernetes services on the customer network. Do not reuse the API VIP or addresses already allocated to other infrastructure services.
 
-## Deployment
+---
+
+## 🚀 Deployment
 
 The expected deployment sequence is:
 
@@ -400,7 +429,9 @@ The common node stage prepares the host, unpacks artifacts, configures local pac
 
 Ansible is responsible for host and cluster lifecycle tasks. It does not encode the dependency graph for every platform chart; Helmfile owns platform release ordering and reconciliation.
 
-## Platform components
+---
+
+## 🧩 Platform components
 
 ### Cilium
 
@@ -448,7 +479,9 @@ The current baseline includes:
 
 These capabilities are a baseline, not a complete security program. Review policies, encryption-key handling, RBAC, network controls, mesh policies, and operational procedures against the requirements of each target environment.
 
-## Secrets and security
+---
+
+## 🔐 Secrets and security
 
 ### SOPS and age
 
@@ -477,7 +510,9 @@ Before deploying or publishing a fork of this repository:
 5. Verify the provenance and integrity of artifacts and transferred archives according to the customer's supply-chain security requirements.
 6. Define a secure lifecycle for the Kubernetes encryption-at-rest key. Loss of the active key can make previously encrypted Kubernetes data unreadable.
 
-## Logging and observability
+---
+
+## 📊 Logging and observability
 
 The current logging and event-forwarding path uses:
 
@@ -489,7 +524,9 @@ AxoSyslog is a demonstration destination used to show the forwarding pipeline. I
 
 The repository does not currently provide a complete metrics and observability stack. Metrics collection, dashboards, and alerting are outside the current implementation scope.
 
-## Application team responsibilities
+---
+
+## 🤝 Application team responsibilities
 
 The platform provides shared infrastructure capabilities so application teams can focus on their workloads.
 
@@ -505,7 +542,9 @@ The platform provides shared infrastructure capabilities so application teams ca
 
 The customer remains responsible for the underlying infrastructure, network, storage capacity, and infrastructure-level backup and recovery strategy.
 
-## Repository layout
+---
+
+## 🗂️ Repository layout
 
 The following is an abbreviated view of the current repository structure:
 
@@ -569,7 +608,9 @@ Contains Helmfile release definitions, custom charts, and component values.
 
 The release groups are organized into networking, networking configuration, storage, gateway, and observability stages. Helmfile owns chart dependency and release ordering; Ansible invokes the platform deployment rather than duplicating that dependency graph.
 
-## Validation
+---
+
+## 🧪 Validation
 
 After deployment, the following Kubernetes commands provide a basic manual starting point for checking cluster state:
 
@@ -591,7 +632,9 @@ kubectl get ciliumloadbalancerippools
 
 These are operator checks, not a claim that the repository includes a separate automated acceptance-test suite. Validate VIP failover, service IP reachability, mesh enrollment, gateway routing, storage behavior, and log delivery in the target network before onboarding application workloads.
 
-## Limitations and operational considerations
+---
+
+## ⚠️ Limitations and operational considerations
 
 The following limitations are important when evaluating or adapting this project:
 
@@ -606,7 +649,9 @@ The following limitations are important when evaluating or adapting this project
 - **No full application lifecycle:** application charts, databases, application-specific secrets, routes, and workload lifecycle remain application-team responsibilities.
 - **Environment-specific validation:** network ranges, ports, interface names, VIP reachability, security policy, storage behavior, and upstream artifact availability must be validated for each customer environment.
 
-## Roadmap
+---
+
+## 🗺️ Roadmap
 
 Potential areas for future development include:
 
@@ -618,6 +663,8 @@ Potential areas for future development include:
 
 These are planned or potential improvements, not claims about currently implemented functionality.
 
-## License
+---
+
+## 📄 License
 
 See [LICENSE](LICENSE) for the license governing this project.
